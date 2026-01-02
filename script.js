@@ -17,9 +17,10 @@ import {
   signInWithPopup,
   signOut,
   onAuthStateChanged,
+  signInAnonymously,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// --- KONFIGURASI ---
+// --- KONFIGURASI FIREBASE ---
 const firebaseConfig = {
   apiKey: "AIzaSyCFPnr_wwe8a3KsWQFyf9Y_hjj81WzOHtU",
   authDomain: "dompet-ku-web.firebaseapp.com",
@@ -36,10 +37,10 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 // --- SELECTOR DOM ---
-// (Selector kategori sudah dihapus)
 const loginScreen = document.getElementById("login-screen");
 const appScreen = document.getElementById("app-screen");
 const loginBtn = document.getElementById("login-btn");
+const anonLoginBtn = document.getElementById("anon-login-btn");
 const logoutBtn = document.getElementById("logout-btn");
 
 const balance = document.getElementById("balance");
@@ -51,13 +52,18 @@ const text = document.getElementById("text");
 const amount = document.getElementById("amount");
 const ctx = document.getElementById("expenseChart");
 
+// TAMBAHAN SELECTOR MODAL IPHONE
+const iosModal = document.getElementById("ios-modal");
+const modalCancelBtn = document.getElementById("modal-cancel");
+const modalConfirmBtn = document.getElementById("modal-confirm");
+
 const filterMonth = document.getElementById("filter-month");
 
 let transactions = [];
 let unsubscribe;
 let myChart = null;
 
-// --- FUNGSI FORMAT RUPIAH ---
+// --- FUNGSI FORMATTING ---
 function formatRupiah(angka) {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -66,18 +72,15 @@ function formatRupiah(angka) {
   }).format(angka);
 }
 
-// --- FUNGSI TANGGAL (UNTUK FILTER) ---
 function getMonthYear(firebaseTimestamp) {
   if (!firebaseTimestamp) return "";
   const date = firebaseTimestamp.toDate();
   return date.toLocaleString("id-ID", { month: "long", year: "numeric" });
 }
 
-// --- FUNGSI TANGGAL LENGKAP (UNTUK TAMPILAN) ---
 function formatFullDate(firebaseTimestamp) {
   if (!firebaseTimestamp) return "Baru saja...";
   const date = firebaseTimestamp.toDate();
-
   return date.toLocaleString("id-ID", {
     weekday: "long",
     day: "numeric",
@@ -91,12 +94,29 @@ function formatFullDate(firebaseTimestamp) {
 
 // --- EVENT LOGIN & LOGOUT ---
 loginBtn.onclick = () => signInWithPopup(auth, provider);
+
+// Tambahan untuk Login Anonymous
+anonLoginBtn.onclick = () => {
+  signInAnonymously(auth)
+    .then(() => {
+      console.log("Berhasil masuk sebagai tamu");
+    })
+    .catch((error) => {
+      console.error("Gagal login tamu:", error);
+      alert("Gagal masuk: " + error.message);
+    });
+};
+
 logoutBtn.onclick = () => signOut(auth);
 
 // --- MONITOR STATUS USER ---
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    console.log("User masuk:", user.displayName);
+    // --- UPDATE: Menangani Nama User (Google vs Tamu) ---
+    // Jika user punya nama (Google), pakai namanya. Jika tidak (Anon), pakai "Tamu"
+    const namaUser = user.displayName ? user.displayName : "Tamu (Anonymous)";
+    console.log("User masuk:", namaUser);
+
     loginScreen.classList.add("hidden");
     appScreen.classList.remove("hidden");
 
@@ -124,7 +144,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// --- FUNGSI FILTER ---
+// --- LOGIKA FILTER ---
 function populateFilterOptions() {
   const currentSelection = filterMonth.value;
   const months = new Set();
@@ -161,7 +181,7 @@ function getFilteredTransactions() {
 
 filterMonth.addEventListener("change", init);
 
-// --- FUNGSI TRANSAKSI ---
+// --- TRANSAKSI (ADD & REMOVE) ---
 async function addTransaction(e) {
   e.preventDefault();
   if (text.value.trim() === "" || amount.value.trim() === "") {
@@ -170,7 +190,6 @@ async function addTransaction(e) {
     const user = auth.currentUser;
     if (!user) return;
 
-    // [UBAH] Tidak lagi menyimpan field 'category'
     await addDoc(collection(db, "transactions"), {
       text: text.value,
       amount: +amount.value,
@@ -183,64 +202,78 @@ async function addTransaction(e) {
   }
 }
 
-async function removeTransaction(id) {
-  if (confirm("Hapus transaksi ini?")) {
-    await deleteDoc(doc(db, "transactions", id));
-  }
+// --- VARIABEL UNTUK MENYIMPAN ID TRANSAKSI SEMENTARA ---
+let deleteId = null;
+
+// Fungsi ini dipanggil saat tombol silang (x) ditekan
+function removeTransaction(id) {
+  deleteId = id; // Simpan ID yang mau dihapus
+  iosModal.classList.remove("hidden"); // Munculkan modal
 }
 
-// --- FUNGSI TAMPILAN & GRAFIK ---
+// Saat tombol "Batal" di modal ditekan
+modalCancelBtn.onclick = () => {
+  iosModal.classList.add("hidden"); // Sembunyikan modal
+  deleteId = null; // Reset ID
+};
 
+// Saat tombol "Hapus" di modal ditekan
+modalConfirmBtn.onclick = async () => {
+  if (deleteId) {
+    await deleteDoc(doc(db, "transactions", deleteId)); // Hapus dari Firebase
+    iosModal.classList.add("hidden"); // Sembunyikan modal
+    deleteId = null; // Reset ID
+  }
+};
+
+// --- TAMPILAN DOM & CHART ---
 function addTransactionDOM(transaction) {
+  // Tentukan tanda plus atau minus
   const sign = transaction.amount < 0 ? "-" : "+";
+
+  // Buat elemen list item (li)
   const item = document.createElement("li");
 
-  const fullDateStr = formatFullDate(transaction.createdAt);
-
+  // Tentukan warna border berdasarkan tipe transaksi (Merah/Hijau)
   item.classList.add(transaction.amount < 0 ? "minus" : "plus");
 
-  item.innerHTML = `
-    <div style="display: flex; flex-direction: column;">
-        <span style="font-weight: bold; font-size: 16px; word-wrap: break-word;">
-            ${transaction.text}
-        </span>
-        
-        <small style="color: #888; font-size: 11px; margin-top: 4px; font-style: italic;">
-           ${fullDateStr}
-        </small>
-    </div>
+  // --- LOGIKA FORMAT TANGGAL ---
+  let dateString = "Baru saja";
+  if (transaction.createdAt) {
+    // Cek apakah data dari Firebase (Timestamp) atau local (Date biasa)
+    const dateObj = transaction.createdAt.toDate
+      ? transaction.createdAt.toDate()
+      : new Date();
 
-    <span class="amount-text">
-        ${sign} ${formatRupiah(Math.abs(transaction.amount))}
-    </span>
+    // Format: 2 Jan 2024, 14:30
+    dateString = dateObj.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  // --- STRUKTUR HTML BARU (SLIDE & LAYOUT) ---
+  item.innerHTML = `
+    <div class="li-content">
+      <div class="tx-details">
+        <span class="tx-name">${transaction.text}</span>
+        <span class="tx-amount">${sign}${formatRupiah(
+    Math.abs(transaction.amount)
+  )}</span>
+        <span class="tx-date">${dateString}</span>
+      </div>
+    </div>
     
-    <button class="delete-btn" onclick="window.removeTransaction('${
-      transaction.id
-    }')">x</button>
+    <button class="delete-btn" onclick="removeTransaction('${transaction.id}')">
+      <span class="trash-icon">🗑️</span>
+    </button>
   `;
+
   list.appendChild(item);
 }
-
-// [UBAH] Tampilan disederhanakan (Hapus Kategori)
-// Tanggal langsung ditaruh di bawah Nama Transaksi
-item.innerHTML = `
-    <div style="display: flex; flex-direction: column;">
-        <span style="font-weight: bold; font-size: 16px;">${
-          transaction.text
-        }</span>
-        
-        <small style="color: #888; font-size: 11px; margin-top: 4px; font-style: italic;">
-           ${fullDateStr}
-        </small>
-    </div>
-
-    <span>${sign} ${formatRupiah(Math.abs(transaction.amount))}</span>
-    
-    <button class="delete-btn" onclick="window.removeTransaction('${
-      transaction.id
-    }')">x</button>
-  `;
-list.appendChild(item);
 
 function updateValues(currentTransactions) {
   const amounts = currentTransactions.map((transaction) => transaction.amount);
@@ -304,5 +337,10 @@ function init() {
   updateValues(filteredData);
 }
 
+// ==========================================================
+// BAGIAN PENTING: MENGEKSPOS FUNGSI KE HTML (WINDOW)
+// ==========================================================
+// Tanpa baris ini, onclick="removeTransaction(...)" akan error!
 window.removeTransaction = removeTransaction;
+
 form.addEventListener("submit", addTransaction);

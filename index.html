@@ -16,9 +16,14 @@
   </head>
   <body>
     <section id="login-screen" class="center-screen">
-      <h2>Selamat Datang di<br />Dompet Ku</h2>
+      <h2>Selamat Datang di<br />Dompetku</h2>
       <p>Catat keuanganmu dengan aman.</p>
+
       <button id="login-btn" class="btn google-btn">Login dengan Google</button>
+
+      <button id="anon-login-btn" class="btn anon-btn">
+        Masuk Tanpa Akun (Tamu)
+      </button>
     </section>
 
     <div id="app-screen" class="container hidden">
@@ -85,5 +90,21 @@
     </div>
 
     <script type="module" src="script.js"></script>
+    <div id="ios-modal" class="ios-modal-overlay hidden">
+      <div class="ios-modal">
+        <div class="ios-modal-text">
+          <h3>Hapus Transaksi?</h3>
+          <p>Tindakan ini tidak dapat dibatalkan.</p>
+        </div>
+        <div class="ios-modal-actions">
+          <button id="modal-cancel">Batal</button>
+          <button id="modal-confirm" class="text-danger">Hapus</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
   </body>
 </html>
