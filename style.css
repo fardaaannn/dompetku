@@ -161,3 +161,13 @@ input[type="number"] {
   font-size: 12px;
   border-radius: 4px;
 }
+
+/* --- Style untuk Grafik --- */
+.chart-container {
+  position: relative;
+  height: 300px; /* Tinggi grafik */
+  width: 100%;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: center;
+}

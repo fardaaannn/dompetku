@@ -20,7 +20,7 @@ import {
   onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// --- KONFIGURASI (JANGAN LUPA ISI INI DENGAN KODEMU LAGI) ---
+// --- KONFIGURASI (PASTIKAN API KEY INI BENAR SESUAI PROJECTMU) ---
 const firebaseConfig = {
   apiKey: "AIzaSyCFPnr_wwe8a3KsWQFyf9Y_hjj81WzOHtU",
   authDomain: "dompet-ku-web.firebaseapp.com",
@@ -33,8 +33,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app); // Inisialisasi Auth
-const provider = new GoogleAuthProvider(); // Provider Google
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
 // --- SELECTOR DOM ---
 const loginScreen = document.getElementById("login-screen");
@@ -50,15 +50,19 @@ const form = document.getElementById("form");
 const text = document.getElementById("text");
 const amount = document.getElementById("amount");
 
+// Selector baru untuk Grafik
+const ctx = document.getElementById("expenseChart");
+
 let transactions = [];
-let unsubscribe; // Variabel untuk mematikan langganan data saat logout
+let unsubscribe;
+let myChart = null; // Variabel untuk menyimpan instance grafik
 
 // --- EVENT LOGIN & LOGOUT ---
 
 loginBtn.onclick = () => signInWithPopup(auth, provider);
 logoutBtn.onclick = () => signOut(auth);
 
-// --- MONITOR STATUS USER (Inti Aplikasi) ---
+// --- MONITOR STATUS USER ---
 onAuthStateChanged(auth, (user) => {
   if (user) {
     // USER LOGIN
@@ -66,8 +70,6 @@ onAuthStateChanged(auth, (user) => {
     loginScreen.classList.add("hidden");
     appScreen.classList.remove("hidden");
 
-    // Ambil data KHUSUS milik user ini (filter by 'uid')
-    // Perhatikan bagian: where("uid", "==", user.uid)
     const q = query(
       collection(db, "transactions"),
       where("uid", "==", user.uid),
@@ -85,7 +87,6 @@ onAuthStateChanged(auth, (user) => {
       },
       (error) => {
         console.error("Error mengambil data: ", error);
-        // Jika error index muncul, lihat console browser untuk link perbaikan
       }
     );
   } else {
@@ -94,7 +95,6 @@ onAuthStateChanged(auth, (user) => {
     loginScreen.classList.remove("hidden");
     appScreen.classList.add("hidden");
 
-    // Hentikan pengambilan data jika ada
     if (unsubscribe) unsubscribe();
     transactions = [];
     init();
@@ -109,15 +109,14 @@ async function addTransaction(e) {
   if (text.value.trim() === "" || amount.value.trim() === "") {
     alert("Mohon isi keterangan dan jumlah uang");
   } else {
-    // Tambahkan data dengan UID user yang sedang login
     const user = auth.currentUser;
-    if (!user) return; // Jaga-jaga kalau belum login
+    if (!user) return;
 
     await addDoc(collection(db, "transactions"), {
       text: text.value,
       amount: +amount.value,
       createdAt: serverTimestamp(),
-      uid: user.uid, // PENTING: Menandai ini data milik siapa
+      uid: user.uid,
     });
 
     text.value = "";
@@ -126,10 +125,13 @@ async function addTransaction(e) {
 }
 
 async function removeTransaction(id) {
-  await deleteDoc(doc(db, "transactions", id));
+  const confirmed = confirm("Apakah Anda yakin ingin menghapus transaksi ini?");
+  if (confirmed) {
+    await deleteDoc(doc(db, "transactions", id));
+  }
 }
 
-// --- FUNGSI TAMPILAN (Sama seperti sebelumnya) ---
+// --- FUNGSI TAMPILAN & GRAFIK ---
 
 function addTransactionDOM(transaction) {
   const sign = transaction.amount < 0 ? "-" : "+";
@@ -157,6 +159,45 @@ function updateValues() {
   balance.innerText = `Rp ${total}`;
   money_plus.innerText = `+Rp ${income}`;
   money_minus.innerText = `-Rp ${expense}`;
+
+  // Update Grafik setiap kali nilai berubah
+  renderChart(income, expense);
+}
+
+function renderChart(income, expense) {
+  // Jika grafik sudah ada sebelumnya, hancurkan dulu agar tidak menumpuk (error glitch)
+  if (myChart) {
+    myChart.destroy();
+  }
+
+  // Buat grafik baru
+  myChart = new Chart(ctx, {
+    type: "doughnut", // Jenis grafik: donat
+    data: {
+      labels: ["Pemasukan", "Pengeluaran"],
+      datasets: [
+        {
+          label: "Jumlah (Rp)",
+          data: [income, expense],
+          backgroundColor: [
+            "#2ecc71", // Warna Hijau (sesuai CSS)
+            "#c0392b", // Warna Merah (sesuai CSS)
+          ],
+          borderWidth: 1,
+          borderColor: "#ffffff",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false, // Agar mengikuti tinggi container di CSS
+      plugins: {
+        legend: {
+          position: "bottom",
+        },
+      },
+    },
+  });
 }
 
 function init() {
@@ -165,5 +206,6 @@ function init() {
   updateValues();
 }
 
+// Expose fungsi ke window agar bisa dipanggil dari HTML (onclick)
 window.removeTransaction = removeTransaction;
 form.addEventListener("submit", addTransaction);
