@@ -1,3 +1,8 @@
+// --- Security Signature (Do not remove) ---
+console.log(
+  "\x43\x72\x65\x61\x74\x65\x64\x20\x62\x79\x20\x46\x61\x72\x64\x61\x6E\x20\x41\x7A\x7A\x75\x68\x72\x69"
+);
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getFirestore,
@@ -228,24 +233,21 @@ modalConfirmBtn.onclick = async () => {
 
 // --- TAMPILAN DOM & CHART ---
 function addTransactionDOM(transaction) {
-  // Tentukan tanda plus atau minus
+  // 1. Tentukan tanda plus atau minus
   const sign = transaction.amount < 0 ? "-" : "+";
 
-  // Buat elemen list item (li)
+  // 2. Buat elemen list item (li) dan beri warna border (merah/hijau)
   const item = document.createElement("li");
-
-  // Tentukan warna border berdasarkan tipe transaksi (Merah/Hijau)
   item.classList.add(transaction.amount < 0 ? "minus" : "plus");
 
-  // --- LOGIKA FORMAT TANGGAL ---
+  // 3. Format Tanggal yang Benar (Mengatasi data dari Firebase atau Local)
   let dateString = "Baru saja";
   if (transaction.createdAt) {
-    // Cek apakah data dari Firebase (Timestamp) atau local (Date biasa)
-    const dateObj = transaction.createdAt.toDate
-      ? transaction.createdAt.toDate()
-      : new Date();
+    // Cek apakah format timestamp Firebase (seconds) atau Date biasa
+    const dateObj = transaction.createdAt.seconds
+      ? new Date(transaction.createdAt.seconds * 1000)
+      : new Date(transaction.createdAt);
 
-    // Format: 2 Jan 2024, 14:30
     dateString = dateObj.toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
@@ -255,7 +257,7 @@ function addTransactionDOM(transaction) {
     });
   }
 
-  // --- STRUKTUR HTML BARU (SLIDE & LAYOUT) ---
+  // 4. Masukkan HTML dengan STRUKTUR YANG BENAR (Sesuai CSS Layout Pintar)
   item.innerHTML = `
     <div class="li-content">
       <div class="tx-details">
@@ -271,6 +273,25 @@ function addTransactionDOM(transaction) {
       <span class="trash-icon">🗑️</span>
     </button>
   `;
+
+  // 5. Tambahkan Event Listener KHUSUS HP (Sentuh untuk Slide)
+  item.addEventListener("click", (e) => {
+    // Jika yang diklik adalah tombol hapus (atau ikon sampahnya), jangan lakukan apa-apa (biarkan fungsi hapus jalan)
+    if (e.target.closest(".delete-btn")) return;
+
+    // Cek apakah baris ini sedang terbuka?
+    const isActive = item.classList.contains("active-mobile");
+
+    // Tutup semua tombol hapus di baris lain biar rapi (hanya 1 yang terbuka)
+    document.querySelectorAll(".list li").forEach((el) => {
+      el.classList.remove("active-mobile");
+    });
+
+    // Jika tadi belum terbuka, sekarang buka (munculkan tombol hapus)
+    if (!isActive) {
+      item.classList.add("active-mobile");
+    }
+  });
 
   list.appendChild(item);
 }
