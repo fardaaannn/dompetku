@@ -11,7 +11,6 @@ import {
   serverTimestamp,
   where,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-// Import modul Authentication
 import {
   getAuth,
   GoogleAuthProvider,
@@ -20,7 +19,7 @@ import {
   onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// --- KONFIGURASI (PASTIKAN API KEY INI BENAR SESUAI PROJECTMU) ---
+// --- KONFIGURASI ---
 const firebaseConfig = {
   apiKey: "AIzaSyCFPnr_wwe8a3KsWQFyf9Y_hjj81WzOHtU",
   authDomain: "dompet-ku-web.firebaseapp.com",
@@ -37,6 +36,7 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 // --- SELECTOR DOM ---
+// (Selector kategori sudah dihapus)
 const loginScreen = document.getElementById("login-screen");
 const appScreen = document.getElementById("app-screen");
 const loginBtn = document.getElementById("login-btn");
@@ -49,23 +49,53 @@ const list = document.getElementById("list");
 const form = document.getElementById("form");
 const text = document.getElementById("text");
 const amount = document.getElementById("amount");
-
-// Selector baru untuk Grafik
 const ctx = document.getElementById("expenseChart");
+
+const filterMonth = document.getElementById("filter-month");
 
 let transactions = [];
 let unsubscribe;
-let myChart = null; // Variabel untuk menyimpan instance grafik
+let myChart = null;
+
+// --- FUNGSI FORMAT RUPIAH ---
+function formatRupiah(angka) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(angka);
+}
+
+// --- FUNGSI TANGGAL (UNTUK FILTER) ---
+function getMonthYear(firebaseTimestamp) {
+  if (!firebaseTimestamp) return "";
+  const date = firebaseTimestamp.toDate();
+  return date.toLocaleString("id-ID", { month: "long", year: "numeric" });
+}
+
+// --- FUNGSI TANGGAL LENGKAP (UNTUK TAMPILAN) ---
+function formatFullDate(firebaseTimestamp) {
+  if (!firebaseTimestamp) return "Baru saja...";
+  const date = firebaseTimestamp.toDate();
+
+  return date.toLocaleString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
 
 // --- EVENT LOGIN & LOGOUT ---
-
 loginBtn.onclick = () => signInWithPopup(auth, provider);
 logoutBtn.onclick = () => signOut(auth);
 
 // --- MONITOR STATUS USER ---
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    // USER LOGIN
     console.log("User masuk:", user.displayName);
     loginScreen.classList.add("hidden");
     appScreen.classList.remove("hidden");
@@ -76,42 +106,71 @@ onAuthStateChanged(auth, (user) => {
       orderBy("createdAt", "desc")
     );
 
-    unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        transactions = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        init();
-      },
-      (error) => {
-        console.error("Error mengambil data: ", error);
-      }
-    );
+    unsubscribe = onSnapshot(q, (snapshot) => {
+      transactions = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      populateFilterOptions();
+      init();
+    });
   } else {
-    // USER LOGOUT
-    console.log("User keluar");
     loginScreen.classList.remove("hidden");
     appScreen.classList.add("hidden");
-
     if (unsubscribe) unsubscribe();
     transactions = [];
     init();
   }
 });
 
-// --- FUNGSI TRANSAKSI ---
+// --- FUNGSI FILTER ---
+function populateFilterOptions() {
+  const currentSelection = filterMonth.value;
+  const months = new Set();
+  transactions.forEach((t) => {
+    if (t.createdAt) {
+      months.add(getMonthYear(t.createdAt));
+    }
+  });
 
+  filterMonth.innerHTML = '<option value="all">Semua Waktu</option>';
+  months.forEach((month) => {
+    const option = document.createElement("option");
+    option.value = month;
+    option.innerText = month;
+    filterMonth.appendChild(option);
+  });
+
+  if ([...months].includes(currentSelection) || currentSelection === "all") {
+    filterMonth.value = currentSelection;
+  } else {
+    filterMonth.value = "all";
+  }
+}
+
+function getFilteredTransactions() {
+  const selectedMonth = filterMonth.value;
+  if (selectedMonth === "all") {
+    return transactions;
+  }
+  return transactions.filter((t) => {
+    return t.createdAt && getMonthYear(t.createdAt) === selectedMonth;
+  });
+}
+
+filterMonth.addEventListener("change", init);
+
+// --- FUNGSI TRANSAKSI ---
 async function addTransaction(e) {
   e.preventDefault();
-
   if (text.value.trim() === "" || amount.value.trim() === "") {
     alert("Mohon isi keterangan dan jumlah uang");
   } else {
     const user = auth.currentUser;
     if (!user) return;
 
+    // [UBAH] Tidak lagi menyimpan field 'category'
     await addDoc(collection(db, "transactions"), {
       text: text.value,
       amount: +amount.value,
@@ -125,8 +184,7 @@ async function addTransaction(e) {
 }
 
 async function removeTransaction(id) {
-  const confirmed = confirm("Apakah Anda yakin ingin menghapus transaksi ini?");
-  if (confirmed) {
+  if (confirm("Hapus transaksi ini?")) {
     await deleteDoc(doc(db, "transactions", id));
   }
 }
@@ -136,9 +194,26 @@ async function removeTransaction(id) {
 function addTransactionDOM(transaction) {
   const sign = transaction.amount < 0 ? "-" : "+";
   const item = document.createElement("li");
+
+  const fullDateStr = formatFullDate(transaction.createdAt);
+
   item.classList.add(transaction.amount < 0 ? "minus" : "plus");
+
   item.innerHTML = `
-    ${transaction.text} <span>${sign}Rp ${Math.abs(transaction.amount)}</span>
+    <div style="display: flex; flex-direction: column;">
+        <span style="font-weight: bold; font-size: 16px; word-wrap: break-word;">
+            ${transaction.text}
+        </span>
+        
+        <small style="color: #888; font-size: 11px; margin-top: 4px; font-style: italic;">
+           ${fullDateStr}
+        </small>
+    </div>
+
+    <span class="amount-text">
+        ${sign} ${formatRupiah(Math.abs(transaction.amount))}
+    </span>
+    
     <button class="delete-btn" onclick="window.removeTransaction('${
       transaction.id
     }')">x</button>
@@ -146,8 +221,29 @@ function addTransactionDOM(transaction) {
   list.appendChild(item);
 }
 
-function updateValues() {
-  const amounts = transactions.map((transaction) => transaction.amount);
+// [UBAH] Tampilan disederhanakan (Hapus Kategori)
+// Tanggal langsung ditaruh di bawah Nama Transaksi
+item.innerHTML = `
+    <div style="display: flex; flex-direction: column;">
+        <span style="font-weight: bold; font-size: 16px;">${
+          transaction.text
+        }</span>
+        
+        <small style="color: #888; font-size: 11px; margin-top: 4px; font-style: italic;">
+           ${fullDateStr}
+        </small>
+    </div>
+
+    <span>${sign} ${formatRupiah(Math.abs(transaction.amount))}</span>
+    
+    <button class="delete-btn" onclick="window.removeTransaction('${
+      transaction.id
+    }')">x</button>
+  `;
+list.appendChild(item);
+
+function updateValues(currentTransactions) {
+  const amounts = currentTransactions.map((transaction) => transaction.amount);
   const total = amounts.reduce((acc, item) => (acc += item), 0);
   const income = amounts
     .filter((item) => item > 0)
@@ -156,33 +252,28 @@ function updateValues() {
     amounts.filter((item) => item < 0).reduce((acc, item) => (acc += item), 0) *
     -1;
 
-  balance.innerText = `Rp ${total}`;
-  money_plus.innerText = `+Rp ${income}`;
-  money_minus.innerText = `-Rp ${expense}`;
+  balance.innerText = `${formatRupiah(total)}`;
+  money_plus.innerText = `+${formatRupiah(income)}`;
+  money_minus.innerText = `-${formatRupiah(expense)}`;
 
-  // Update Grafik setiap kali nilai berubah
   renderChart(income, expense);
 }
 
 function renderChart(income, expense) {
-  // Jika grafik sudah ada sebelumnya, hancurkan dulu agar tidak menumpuk (error glitch)
   if (myChart) {
     myChart.destroy();
   }
+  const total = income + expense;
 
-  // Buat grafik baru
   myChart = new Chart(ctx, {
-    type: "doughnut", // Jenis grafik: donat
+    type: "doughnut",
+    plugins: [ChartDataLabels],
     data: {
       labels: ["Pemasukan", "Pengeluaran"],
       datasets: [
         {
-          label: "Jumlah (Rp)",
           data: [income, expense],
-          backgroundColor: [
-            "#2ecc71", // Warna Hijau (sesuai CSS)
-            "#c0392b", // Warna Merah (sesuai CSS)
-          ],
+          backgroundColor: ["#2ecc71", "#c0392b"],
           borderWidth: 1,
           borderColor: "#ffffff",
         },
@@ -190,10 +281,16 @@ function renderChart(income, expense) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false, // Agar mengikuti tinggi container di CSS
+      maintainAspectRatio: false,
       plugins: {
-        legend: {
-          position: "bottom",
+        legend: { position: "bottom" },
+        datalabels: {
+          color: "#fff",
+          font: { weight: "bold", size: 14 },
+          formatter: (value) => {
+            if (total === 0) return "0%";
+            return ((value * 100) / total).toFixed(1) + "%";
+          },
         },
       },
     },
@@ -202,10 +299,10 @@ function renderChart(income, expense) {
 
 function init() {
   list.innerHTML = "";
-  transactions.forEach(addTransactionDOM);
-  updateValues();
+  const filteredData = getFilteredTransactions();
+  filteredData.forEach(addTransactionDOM);
+  updateValues(filteredData);
 }
 
-// Expose fungsi ke window agar bisa dipanggil dari HTML (onclick)
 window.removeTransaction = removeTransaction;
 form.addEventListener("submit", addTransaction);

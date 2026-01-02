@@ -1,17 +1,22 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+:root {
+  --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   background-color: #f7f7f7;
-
-  /* Menggunakan Font Inter */
   font-family: "Inter", sans-serif;
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
   margin: 0;
-
-  /* Membuat font terlihat lebih halus/tajam */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -32,45 +37,104 @@ h3 {
   margin: 40px 0 10px;
 }
 
+h4 {
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/* --- KOTAK PEMASUKAN & PENGELUARAN (FITUR SLIDING) --- */
 .inc-exp-container {
   background-color: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  box-shadow: var(--box-shadow);
   padding: 20px;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   margin: 20px 0;
+  gap: 10px;
 }
 
 .inc-exp-container > div {
-  flex: 1;
+  flex: 1; /* Membagi dua kotak sama rata */
   text-align: center;
+  padding: 0 5px;
+
+  /* Agar angka bisa digeser (slide) jika kepanjangan */
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+
+  /* Scroll halus untuk HP */
+  -webkit-overflow-scrolling: touch;
 }
 
+/* Scrollbar Minimalis (Tipis) */
+.inc-exp-container > div::-webkit-scrollbar {
+  height: 4px;
+}
+
+.inc-exp-container > div::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+
+.inc-exp-container > div::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Garis Pemisah Tengah */
 .inc-exp-container > div:first-of-type {
   border-right: 1px solid #dedede;
 }
 
 .money {
-  font-size: 20px;
-  letter-spacing: 1px;
+  font-size: 18px;
+  letter-spacing: 0.5px;
   margin: 5px 0;
+  display: inline-block;
+  font-weight: 600;
 }
 
 .money.plus {
-  color: #2ecc71; /* Warna Hijau */
+  color: #2ecc71;
 }
 
 .money.minus {
-  color: #c0392b; /* Warna Merah */
+  color: #c0392b;
 }
 
+/* --- FILTER BULAN (Dropdown di kanan) --- */
+.filter-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 20px 0 10px;
+}
+
+.filter-container label {
+  margin-right: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+
+.filter-container select {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* --- FORM --- */
 label {
   display: inline-block;
   margin: 10px 0;
 }
 
 input[type="text"],
-input[type="number"] {
+input[type="number"],
+select {
   border: 1px solid #dedede;
   border-radius: 2px;
   display: block;
@@ -82,7 +146,7 @@ input[type="number"] {
 .btn {
   cursor: pointer;
   background-color: #9c88ff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  box-shadow: var(--box-shadow);
   color: #fff;
   border: 0;
   display: block;
@@ -90,8 +154,20 @@ input[type="number"] {
   margin: 10px 0 30px;
   padding: 10px;
   width: 100%;
+  border-radius: 4px;
+  transition: background 0.3s;
 }
 
+.btn:hover {
+  background-color: #8e78ff;
+}
+
+.btn:focus,
+.delete-btn:focus {
+  outline: 0;
+}
+
+/* --- DAFTAR RIWAYAT TRANSAKSI --- */
 .list {
   list-style-type: none;
   padding: 0;
@@ -100,13 +176,15 @@ input[type="number"] {
 
 .list li {
   background-color: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  box-shadow: var(--box-shadow);
   color: #333;
   display: flex;
   justify-content: space-between;
+  align-items: center; /* Vertikal center */
   position: relative;
   padding: 10px;
   margin: 10px 0;
+  border-radius: 4px; /* Sedikit melengkung */
 }
 
 .list li.plus {
@@ -117,6 +195,7 @@ input[type="number"] {
   border-right: 5px solid #c0392b;
 }
 
+/* Tombol Hapus (Silang Merah) */
 .delete-btn {
   cursor: pointer;
   background-color: #e74c3c;
@@ -131,20 +210,30 @@ input[type="number"] {
   transform: translate(-100%, -50%);
   opacity: 0;
   transition: opacity 0.3s ease;
+  height: 100%; /* Full height tombol hapus */
+  border-radius: 4px 0 0 4px;
 }
 
 .list li:hover .delete-btn {
   opacity: 1;
 }
 
-/* --- Tambahan untuk Login --- */
+/* --- GRAFIK --- */
+.chart-container {
+  position: relative;
+  height: 250px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+/* --- HALAMAN LOGIN --- */
 .hidden {
   display: none !important;
 }
 
 .center-screen {
   text-align: center;
-  margin-top: 100px;
+  margin-top: 50px;
 }
 
 .google-btn {
@@ -152,22 +241,38 @@ input[type="number"] {
   margin-top: 20px;
 }
 
+.google-btn:hover {
+  background-color: #357ae8;
+}
+
 .btn-small {
   background-color: #333;
   color: #fff;
-  border: 0;
+  border: none;
   padding: 5px 10px;
+  border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
-  border-radius: 4px;
 }
 
-/* --- Style untuk Grafik --- */
-.chart-container {
-  position: relative;
-  height: 300px; /* Tinggi grafik */
-  width: 100%;
-  margin-bottom: 30px;
-  display: flex;
-  justify-content: center;
+.btn-small:hover {
+  background-color: #555;
+}
+
+/* --- TAMBAHAN BARU UNTUK MERAPIKAN ANGKA DI LIST --- */
+
+/* 1. Atur teks Nama Transaksi agar tidak mendesak harga */
+.list li > div:first-child {
+  flex: 1; /* Ambil sisa ruang yang ada */
+  min-width: 0; /* Izinkan teks memendek jika layar sempit */
+  padding-right: 10px; /* Jarak aman dengan angka */
+}
+
+/* 2. Atur teks Harga (Rp) agar sejajar dan satu baris */
+.amount-text {
+  white-space: nowrap; /* KUNCI: Paksa teks tetap satu baris (jangan turun) */
+  font-weight: bold;
+  text-align: right; /* Rata kanan */
+  min-width: 100px; /* Booking lebar minimal supaya +/- sejajar lurus */
+  display: inline-block;
 }

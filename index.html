@@ -11,6 +11,7 @@
       rel="stylesheet"
     />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -50,7 +51,13 @@
       <div class="chart-container">
         <canvas id="expenseChart"></canvas>
       </div>
-      <h3>Riwayat Transaksi</h3>
+
+      <div class="filter-container">
+        <label for="filter-month">Lihat Bulan:</label>
+        <select id="filter-month">
+          <option value="all">Semua Waktu</option>
+        </select>
+      </div>
 
       <h3>Riwayat Transaksi</h3>
       <ul id="list" class="list"></ul>
@@ -59,11 +66,17 @@
       <form id="form">
         <div class="form-control">
           <label for="text">Keterangan</label>
-          <input type="text" id="text" placeholder="Contoh: Gaji, Makan..." />
+          <input
+            type="text"
+            id="text"
+            placeholder="Contoh: Nasi Goreng, Bensin..."
+          />
         </div>
+
         <div class="form-control">
           <label for="amount"
-            >Jumlah <br />(negatif - pengeluaran, positif - pemasukan)</label
+            >Jumlah <br />(Tambahkan - sebelum nominal angka untuk input
+            pengeluaranmu)</label
           >
           <input type="number" id="amount" placeholder="-50000 atau 100000" />
         </div>
