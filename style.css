@@ -197,7 +197,7 @@ select:focus {
 }
 
 /* --- DAFTAR RIWAYAT TRANSAKSI --- */
-/* --- ITEM LIST --- */
+/* --- ITEM LIST (REVISI LAYOUT PINTAR) --- */
 .list {
   list-style-type: none;
   padding: 0;
@@ -315,7 +315,7 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 1; /* Pastikan terlihat */
+  opacity: 1; /* Pastikan terlihat (timpa kode lama) */
 }
 
 /* Icon tong sampah */
@@ -525,3 +525,28 @@ select:focus {
   }
 }
 
+/* --- PERBAIKAN WARNA DROPDOWN FILTER --- */
+select option {
+  background-color: #1e1e1e; /* Paksa latar belakang opsi jadi gelap */
+  color: #fff; /* Tulisan tetap putih */
+}
+
+/* --- PERBAIKAN TAMPILAN FILTER BULAN --- */
+select#filter-month {
+  background-color: #1e1e1e; /* Paksa latar belakang jadi abu gelap */
+  color: #fff; /* Teks putih */
+  border: 1px solid #444; /* Border abu-abu samar */
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+
+  /* PENTING: Memberitahu browser bahwa elemen ini ada dalam mode gelap.
+     Ini akan membuat panah dropdown otomatis menjadi warna terang/putih. */
+  color-scheme: dark;
+}
+
+/* Memastikan saat diklik (focus), bordernya menyala sedikit */
+select#filter-month:focus {
+  outline: none;
+  border-color: #777;
+}

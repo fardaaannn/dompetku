@@ -100,7 +100,7 @@ function formatFullDate(firebaseTimestamp) {
 // --- EVENT LOGIN & LOGOUT ---
 loginBtn.onclick = () => signInWithPopup(auth, provider);
 
-// TAMBAHAN UNTUK LOGIN ANONYMOUS
+// Tambahan untuk Login Anonymous
 anonLoginBtn.onclick = () => {
   signInAnonymously(auth)
     .then(() => {
@@ -296,20 +296,41 @@ function addTransactionDOM(transaction) {
   list.appendChild(item);
 }
 
-function updateValues(currentTransactions) {
-  const amounts = currentTransactions.map((transaction) => transaction.amount);
+// --- UPDATE VALUES (HITUNG SALDO) ---
+function updateValues(dataTransaksi) {
+  // Ambil semua angka dari transaksi
+  const amounts = dataTransaksi.map((transaction) => transaction.amount);
+
+  // 1. Hitung Total Saldo (Semua dijumlahkan)
   const total = amounts.reduce((acc, item) => (acc += item), 0);
+
+  // 2. Hitung Pemasukan (Hanya angka positif)
   const income = amounts
     .filter((item) => item > 0)
     .reduce((acc, item) => (acc += item), 0);
+
+  // 3. Hitung Pengeluaran (Hanya angka negatif)
+  // Kita kalikan -1 agar nilainya menjadi positif untuk perhitungan grafik
   const expense =
     amounts.filter((item) => item < 0).reduce((acc, item) => (acc += item), 0) *
     -1;
 
-  balance.innerText = `${formatRupiah(total)}`;
-  money_plus.innerText = `+${formatRupiah(income)}`;
-  money_minus.innerText = `-${formatRupiah(expense)}`;
+  // --- UPDATE TAMPILAN HTML ---
 
+  // Update Saldo Utama
+  balance.innerText = `${formatRupiah(total)}`;
+
+  // Update Pemasukan (Selalu positif)
+  money_plus.innerText = `${formatRupiah(income)}`;
+
+  // --- PERBAIKAN LOGIKA PENGELUARAN ---
+  // Cek: Jika pengeluaran lebih dari 0, pakai tanda "-". Jika 0, jangan pakai tanda apa-apa.
+  const sign = expense > 0 ? "-" : "";
+
+  // Tampilkan di HTML dengan logika tanda tadi
+  money_minus.innerText = `${sign}${formatRupiah(Math.abs(expense))}`;
+
+  // Update Grafik Lingkaran
   renderChart(income, expense);
 }
 
@@ -365,4 +386,3 @@ function init() {
 window.removeTransaction = removeTransaction;
 
 form.addEventListener("submit", addTransaction);
-
