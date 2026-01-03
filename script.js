@@ -15,6 +15,7 @@ import {
   orderBy,
   serverTimestamp,
   where,
+  enableIndexedDbPersistence,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
   getAuth,
@@ -38,6 +39,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+// --- AKTIFKAN DATABASE OFFLINE ---
+enableIndexedDbPersistence(db).catch((err) => {
+  if (err.code == "failed-precondition") {
+    console.log("Persistence gagal: Mungkin tab lain sedang terbuka.");
+  } else if (err.code == "unimplemented") {
+    console.log("Browser tidak mendukung offline persistence.");
+  }
+});
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
