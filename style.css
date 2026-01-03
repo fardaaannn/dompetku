@@ -416,6 +416,7 @@ select:focus {
   justify-content: center;
   z-index: 9999;
   animation: fadeIn 0.2s ease-out;
+  cursor: pointer;
 }
 
 /* --- MODAL IPHONE (DARK MODE) --- */
