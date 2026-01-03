@@ -14,7 +14,7 @@ Berikut adalah panduan instalasi untuk berbagai perangkat:
 4. Jika tidak muncul:
    - Ketuk ikon Titik Tiga (⋮) di pojok kanan atas.
    - Pilih menu "Install App" atau "Tambahkan ke Layar Utama".
-5. Klik **Install**. Ikon aplikasi akan muncul di menu HP kamu.
+5. Klik Install. Ikon aplikasi akan muncul di menu HP kamu.
 
 ---
 
