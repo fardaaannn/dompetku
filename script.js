@@ -42,6 +42,9 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 // --- SELECTOR DOM ---
+const alertModal = document.getElementById("ios-alert-modal");
+const alertMessage = document.getElementById("alert-message");
+const alertOkBtn = document.getElementById("alert-ok-btn");
 const loginScreen = document.getElementById("login-screen");
 const appScreen = document.getElementById("app-screen");
 const loginBtn = document.getElementById("login-btn");
@@ -56,6 +59,17 @@ const form = document.getElementById("form");
 const text = document.getElementById("text");
 const amount = document.getElementById("amount");
 const ctx = document.getElementById("expenseChart");
+
+// Fungsi untuk memunculkan notifikasi ala iPhone
+function showIOSAlert(pesan) {
+  alertMessage.innerText = pesan; // Ubah teks pesan
+  alertModal.classList.remove("hidden"); // Munculkan modal
+}
+
+// Tutup modal saat tombol OKE ditekan
+alertOkBtn.onclick = () => {
+  alertModal.classList.add("hidden");
+};
 
 // TAMBAHAN SELECTOR MODAL IPHONE
 const iosModal = document.getElementById("ios-modal");
@@ -186,24 +200,49 @@ function getFilteredTransactions() {
 
 filterMonth.addEventListener("change", init);
 
-// --- TRANSAKSI (ADD & REMOVE) ---
+// --- FUNGSI TAMBAH TRANSAKSI ---
 async function addTransaction(e) {
   e.preventDefault();
-  if (text.value.trim() === "" || amount.value.trim() === "") {
-    alert("Mohon isi keterangan dan jumlah uang");
-  } else {
-    const user = auth.currentUser;
-    if (!user) return;
 
-    await addDoc(collection(db, "transactions"), {
-      text: text.value,
-      amount: +amount.value,
-      createdAt: serverTimestamp(),
-      uid: user.uid,
-    });
+  const textValue = text.value.trim();
+  const amountValue = amount.value.trim();
 
+  // --- VALIDASI INPUT (LOGIKA BARU) ---
+
+  // 1. Jika keduanya kosong
+  if (textValue === "" && amountValue === "") {
+    showIOSAlert("Mohon isi keterangan dan jumlah uangmu");
+    return;
+  }
+
+  // 2. Jika hanya jumlah uang yang kosong
+  if (textValue !== "" && amountValue === "") {
+    showIOSAlert("Mohon isi jumlah uangmu");
+    return;
+  }
+
+  // 3. Jika hanya keterangan yang kosong
+  if (textValue === "" && amountValue !== "") {
+    showIOSAlert("Mohon isi keteranganmu");
+    return;
+  }
+
+  // --- JIKA SEMUA AMAN, LANJUT SIMPAN KE FIREBASE ---
+  const transaction = {
+    text: textValue,
+    amount: +amountValue,
+    uid: auth.currentUser.uid, // Simpan ID user pemilik data
+    createdAt: serverTimestamp(), // Waktu server
+  };
+
+  try {
+    await addDoc(collection(db, "transactions"), transaction);
+    // Form akan direset setelah data masuk lewat onSnapshot
     text.value = "";
     amount.value = "";
+  } catch (error) {
+    console.error("Error menambah dokumen: ", error);
+    showIOSAlert("Gagal menyimpan data: " + error.message);
   }
 }
 
