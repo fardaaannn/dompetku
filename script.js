@@ -60,6 +60,11 @@ const loginBtn = document.getElementById("login-btn");
 const anonLoginBtn = document.getElementById("anon-login-btn");
 const logoutBtn = document.getElementById("logout-btn");
 
+// UPDATE: SELECTOR TOMBOL PRIVASI
+const privacyBtn = document.getElementById("privacy-btn");
+// Simpan status sensor (default: false jika belum ada)
+let isPrivacyMode = localStorage.getItem("isPrivacyMode") === "true";
+
 const balance = document.getElementById("balance");
 const money_plus = document.getElementById("money-plus");
 const money_minus = document.getElementById("money-minus");
@@ -98,6 +103,14 @@ function formatRupiah(angka) {
     currency: "IDR",
     minimumFractionDigits: 0,
   }).format(angka);
+}
+
+// UPDATE: Fungsi Helper untuk Sensor Nominal
+function formatMoneyDisplay(angka) {
+  if (isPrivacyMode) {
+    return "Rp ••••••"; // Tampilan sensor
+  }
+  return formatRupiah(angka); // Tampilan asli
 }
 
 function getMonthYear(firebaseTimestamp) {
@@ -141,7 +154,6 @@ logoutBtn.onclick = () => signOut(auth);
 onAuthStateChanged(auth, (user) => {
   if (user) {
     // --- UPDATE: Menangani Nama User (Google vs Tamu) ---
-    // Jika user punya nama (Google), pakai namanya. Jika tidak (Anon), pakai "Tamu"
     const namaUser = user.displayName ? user.displayName : "Tamu (Anonymous)";
     console.log("User masuk:", namaUser);
 
@@ -216,37 +228,30 @@ async function addTransaction(e) {
   const textValue = text.value.trim();
   const amountValue = amount.value.trim();
 
-  // --- VALIDASI INPUT (LOGIKA BARU) ---
-
-  // 1. Jika keduanya kosong
+  // --- VALIDASI INPUT ---
   if (textValue === "" && amountValue === "") {
-    showIOSAlert("Aduhh, isi keterangan📝 dan jumlah uangmu dulu lee💰");
+    showIOSAlert("Aduhh, isi keterangan dan jumlah uangmu dulu lee");
     return;
   }
-
-  // 2. Jika hanya jumlah uang yang kosong
   if (textValue !== "" && amountValue === "") {
-    showIOSAlert("Aduhh, isi jumlah uangmu dulu lee💰");
+    showIOSAlert("Aduhh, isi jumlah uangmu dulu lee");
     return;
   }
-
-  // 3. Jika hanya keterangan yang kosong
   if (textValue === "" && amountValue !== "") {
-    showIOSAlert("Aduhh, isi keteranganmu dulu lee📝");
+    showIOSAlert("Aduhh, isi keteranganmu dulu lee");
     return;
   }
 
-  // --- JIKA SEMUA AMAN, LANJUT SIMPAN KE FIREBASE ---
+  // --- SIMPAN KE FIREBASE ---
   const transaction = {
     text: textValue,
     amount: +amountValue,
-    uid: auth.currentUser.uid, // Simpan ID user pemilik data
-    createdAt: serverTimestamp(), // Waktu server
+    uid: auth.currentUser.uid,
+    createdAt: serverTimestamp(),
   };
 
   try {
     await addDoc(collection(db, "transactions"), transaction);
-    // Form akan direset setelah data masuk lewat onSnapshot
     text.value = "";
     amount.value = "";
   } catch (error) {
@@ -258,40 +263,32 @@ async function addTransaction(e) {
 // --- VARIABEL UNTUK MENYIMPAN ID TRANSAKSI SEMENTARA ---
 let deleteId = null;
 
-// Fungsi ini dipanggil saat tombol silang (x) ditekan
 function removeTransaction(id) {
-  deleteId = id; // Simpan ID yang mau dihapus
-  iosModal.classList.remove("hidden"); // Munculkan modal
+  deleteId = id;
+  iosModal.classList.remove("hidden");
 }
 
-// Saat tombol "Batal" di modal ditekan
 modalCancelBtn.onclick = () => {
-  iosModal.classList.add("hidden"); // Sembunyikan modal
-  deleteId = null; // Reset ID
+  iosModal.classList.add("hidden");
+  deleteId = null;
 };
 
-// Saat tombol "Hapus" di modal ditekan
 modalConfirmBtn.onclick = async () => {
   if (deleteId) {
-    await deleteDoc(doc(db, "transactions", deleteId)); // Hapus dari Firebase
-    iosModal.classList.add("hidden"); // Sembunyikan modal
-    deleteId = null; // Reset ID
+    await deleteDoc(doc(db, "transactions", deleteId));
+    iosModal.classList.add("hidden");
+    deleteId = null;
   }
 };
 
 // --- TAMPILAN DOM & CHART ---
 function addTransactionDOM(transaction) {
-  // 1. Tentukan tanda plus atau minus
   const sign = transaction.amount < 0 ? "-" : "+";
-
-  // 2. Buat elemen list item (li) dan beri warna border (merah/hijau)
   const item = document.createElement("li");
   item.classList.add(transaction.amount < 0 ? "minus" : "plus");
 
-  // 3. Format Tanggal yang Benar (Mengatasi data dari Firebase atau Local)
   let dateString = "Baru saja";
   if (transaction.createdAt) {
-    // Cek apakah format timestamp Firebase (seconds) atau Date biasa
     const dateObj = transaction.createdAt.seconds
       ? new Date(transaction.createdAt.seconds * 1000)
       : new Date(transaction.createdAt);
@@ -305,14 +302,16 @@ function addTransactionDOM(transaction) {
     });
   }
 
-  // 4. Masukkan HTML dengan STRUKTUR YANG BENAR (Sesuai CSS Layout Pintar)
+  // UPDATE: LOGIKA SENSOR DI LIST TRANSAKSI
+  const amountDisplay = isPrivacyMode
+    ? "Rp ••••••"
+    : formatRupiah(Math.abs(transaction.amount));
+
   item.innerHTML = `
     <div class="li-content">
       <div class="tx-details">
         <span class="tx-name">${transaction.text}</span>
-        <span class="tx-amount">${sign}${formatRupiah(
-    Math.abs(transaction.amount)
-  )}</span>
+        <span class="tx-amount">${sign}${amountDisplay}</span>
         <span class="tx-date">${dateString}</span>
       </div>
     </div>
@@ -322,20 +321,12 @@ function addTransactionDOM(transaction) {
     </button>
   `;
 
-  // 5. Tambahkan Event Listener KHUSUS HP (Sentuh untuk Slide)
   item.addEventListener("click", (e) => {
-    // Jika yang diklik adalah tombol hapus (atau ikon sampahnya), jangan lakukan apa-apa (biarkan fungsi hapus jalan)
     if (e.target.closest(".delete-btn")) return;
-
-    // Cek apakah baris ini sedang terbuka?
     const isActive = item.classList.contains("active-mobile");
-
-    // Tutup semua tombol hapus di baris lain biar rapi (hanya 1 yang terbuka)
     document.querySelectorAll(".list li").forEach((el) => {
       el.classList.remove("active-mobile");
     });
-
-    // Jika tadi belum terbuka, sekarang buka (munculkan tombol hapus)
     if (!isActive) {
       item.classList.add("active-mobile");
     }
@@ -346,36 +337,32 @@ function addTransactionDOM(transaction) {
 
 // --- UPDATE VALUES (HITUNG SALDO) ---
 function updateValues(dataTransaksi) {
-  // Ambil semua angka dari transaksi
   const amounts = dataTransaksi.map((transaction) => transaction.amount);
-
-  // 1. Hitung Total Saldo
   const total = amounts.reduce((acc, item) => (acc += item), 0);
-
-  // 2. Hitung Pemasukan (Hanya angka positif)
   const income = amounts
     .filter((item) => item > 0)
     .reduce((acc, item) => (acc += item), 0);
-
-  // 3. Hitung Pengeluaran (Hanya angka negatif)
   const expense =
     amounts.filter((item) => item < 0).reduce((acc, item) => (acc += item), 0) *
     -1;
 
-  // --- UPDATE TAMPILAN HTML ---
+  // --- UPDATE: LOGIKA SENSOR DI SALDO UTAMA, PEMASUKAN, PENGELUARAN ---
 
-  // Update Saldo Utama
-  balance.innerText = `${formatRupiah(total)}`;
+  // Saldo Utama
+  balance.innerText = formatMoneyDisplay(total);
 
-  // Update Pemasukan (BARU: Tambah tanda + jika ada pemasukan)
+  // Pemasukan
   const signPlus = income > 0 ? "+" : "";
-  money_plus.innerText = `${signPlus}${formatRupiah(income)}`;
+  money_plus.innerText = isPrivacyMode
+    ? "+Rp ••••••"
+    : `${signPlus}${formatRupiah(income)}`;
 
-  // Update Pengeluaran (Tanda - jika ada pengeluaran)
+  // Pengeluaran
   const signMinus = expense > 0 ? "-" : "";
-  money_minus.innerText = `${signMinus}${formatRupiah(Math.abs(expense))}`;
+  money_minus.innerText = isPrivacyMode
+    ? "-Rp ••••••"
+    : `${signMinus}${formatRupiah(Math.abs(expense))}`;
 
-  // Update Grafik
   renderChart(income, expense);
 }
 
@@ -424,12 +411,24 @@ function init() {
   updateValues(filteredData);
 }
 
-// ==========================================================
-// BAGIAN PENTING: MENGEKSPOS FUNGSI KE HTML (WINDOW)
-// ==========================================================
-// Tanpa baris ini, onclick="removeTransaction(...)" akan error!
+// --- LOGIKA TOMBOL PRIVASI / SENSOR ---
+function updatePrivacyIcon() {
+  // Ganti ikon mata terbuka (lihat) / monyet (tutup mata)
+  privacyBtn.innerText = isPrivacyMode ? "🙈" : "👁️";
+}
+
+privacyBtn.onclick = () => {
+  isPrivacyMode = !isPrivacyMode; // Balik status
+  localStorage.setItem("isPrivacyMode", isPrivacyMode); // Simpan di browser
+
+  updatePrivacyIcon();
+  init(); // Render ulang semua data
+};
+
+// Panggil sekali saat start agar ikon sesuai status terakhir
+updatePrivacyIcon();
+
+// --- EXPOSE WINDOW ---
 window.removeTransaction = removeTransaction;
 
 form.addEventListener("submit", addTransaction);
-
-
