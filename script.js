@@ -220,19 +220,19 @@ async function addTransaction(e) {
 
   // 1. Jika keduanya kosong
   if (textValue === "" && amountValue === "") {
-    showIOSAlert("Mohon isi keterangan dan jumlah uangmu");
+    showIOSAlert("Mohon isi keterangan📝 dan jumlah uangmu💰");
     return;
   }
 
   // 2. Jika hanya jumlah uang yang kosong
   if (textValue !== "" && amountValue === "") {
-    showIOSAlert("Mohon isi jumlah uangmu");
+    showIOSAlert("Mohon isi jumlah uangmu💰");
     return;
   }
 
   // 3. Jika hanya keterangan yang kosong
   if (textValue === "" && amountValue !== "") {
-    showIOSAlert("Mohon isi keteranganmu");
+    showIOSAlert("Mohon isi keteranganmu📝");
     return;
   }
 
@@ -431,3 +431,4 @@ function init() {
 window.removeTransaction = removeTransaction;
 
 form.addEventListener("submit", addTransaction);
+
