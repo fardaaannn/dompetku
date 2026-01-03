@@ -197,7 +197,7 @@ select:focus {
 }
 
 /* --- DAFTAR RIWAYAT TRANSAKSI --- */
-/* --- ITEM LIST (REVISI LAYOUT PINTAR) --- */
+/* --- ITEM LIST --- */
 .list {
   list-style-type: none;
   padding: 0;
@@ -315,7 +315,7 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 1; /* Pastikan terlihat (timpa kode lama) */
+  opacity: 1; /* Pastikan terlihat */
 }
 
 /* Icon tong sampah */
@@ -524,3 +524,4 @@ select:focus {
     opacity: 1;
   }
 }
+
