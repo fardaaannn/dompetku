@@ -100,7 +100,7 @@ function formatFullDate(firebaseTimestamp) {
 // --- EVENT LOGIN & LOGOUT ---
 loginBtn.onclick = () => signInWithPopup(auth, provider);
 
-// Tambahan untuk Login Anonymous
+// TAMBAHAN UNTUK LOGIN ANONYMOUS
 anonLoginBtn.onclick = () => {
   signInAnonymously(auth)
     .then(() => {
@@ -365,3 +365,4 @@ function init() {
 window.removeTransaction = removeTransaction;
 
 form.addEventListener("submit", addTransaction);
+
