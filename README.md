@@ -9,7 +9,7 @@ Berikut adalah panduan instalasi untuk berbagai perangkat:
 🤖 Android (via Google Chrome)
 
 1. Buka Google Chrome di HP kamu.
-2. Kunjungi link aplikasi: [https://fardaaannn.github.io/dompetku/](https://fardaaannn.github.io/dompetku/)
+2. Kunjungi link aplikasi: [https://fardaaannn.github.io/dompetku/](https://fardaaannn.github.io/dompetku/).
 3. Tunggu sebentar, biasanya akan muncul pop-up "Add Dompetku to Home Screen" di bagian bawah.
 4. Jika tidak muncul:
    - Ketuk ikon Titik Tiga (⋮) di pojok kanan atas.
@@ -23,7 +23,7 @@ Berikut adalah panduan instalasi untuk berbagai perangkat:
 Catatan: Wajib menggunakan browser Safari agar fitur ini berjalan lancar.
 
 1. Buka Safari di iPhone kamu.
-2. Kunjungi link aplikasi: [https://fardaaannn.github.io/dompetku/](https://fardaaannn.github.io/dompetku/)
+2. Kunjungi link aplikasi: [https://fardaaannn.github.io/dompetku/](https://fardaaannn.github.io/dompetku/).
 3. Ketuk tombol Share (ikon kotak dengan panah ke atas ⬆️) di bagian bawah tengah layar.
 4. Geser menu ke bawah sampai menemukan opsi "Add to Home Screen" (atau "Tambah ke Layar Utama").
 5. Ketuk menu tersebut, lalu klik Add (Tambah) di pojok kanan atas.
@@ -34,7 +34,7 @@ Catatan: Wajib menggunakan browser Safari agar fitur ini berjalan lancar.
 💻 Windows (via Chrome / Edge)
 
 1. Buka browser Google Chrome atau Microsoft Edge.
-2. Kunjungi link aplikasi.
+2. Kunjungi link aplikasi: [https://fardaaannn.github.io/dompetku/](https://fardaaannn.github.io/dompetku/).
 3. Lihat di bagian kanan kolom alamat web (Address Bar):
    - Akan muncul ikon kecil bergambar Monitor/Panah Download.
    - Hover mouse kamu, akan muncul tulisan "Install Dompetku".
@@ -47,7 +47,7 @@ Catatan: Wajib menggunakan browser Safari agar fitur ini berjalan lancar.
 
 Opsi 1: Menggunakan Google Chrome (Disarankan)
 1. Buka Google Chrome di Mac.
-2. Kunjungi link aplikasi.
+2. Kunjungi link aplikasi: [https://fardaaannn.github.io/dompetku/](https://fardaaannn.github.io/dompetku/).
 3. Klik ikon Install (gambar monitor kecil dengan panah) di sisi kanan Address Bar.
 4. Klik Install. Aplikasi akan masuk ke folder "Chrome Apps" di Launchpad.
 
