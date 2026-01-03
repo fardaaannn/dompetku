@@ -301,7 +301,7 @@ function updateValues(dataTransaksi) {
   // Ambil semua angka dari transaksi
   const amounts = dataTransaksi.map((transaction) => transaction.amount);
 
-  // 1. Hitung Total Saldo (Semua dijumlahkan)
+  // 1. Hitung Total Saldo
   const total = amounts.reduce((acc, item) => (acc += item), 0);
 
   // 2. Hitung Pemasukan (Hanya angka positif)
@@ -310,7 +310,6 @@ function updateValues(dataTransaksi) {
     .reduce((acc, item) => (acc += item), 0);
 
   // 3. Hitung Pengeluaran (Hanya angka negatif)
-  // Kita kalikan -1 agar nilainya menjadi positif untuk perhitungan grafik
   const expense =
     amounts.filter((item) => item < 0).reduce((acc, item) => (acc += item), 0) *
     -1;
@@ -320,17 +319,15 @@ function updateValues(dataTransaksi) {
   // Update Saldo Utama
   balance.innerText = `${formatRupiah(total)}`;
 
-  // Update Pemasukan (Selalu positif)
-  money_plus.innerText = `${formatRupiah(income)}`;
+  // Update Pemasukan (BARU: Tambah tanda + jika ada pemasukan)
+  const signPlus = income > 0 ? "+" : "";
+  money_plus.innerText = `${signPlus}${formatRupiah(income)}`;
 
-  // --- PERBAIKAN LOGIKA PENGELUARAN ---
-  // Cek: Jika pengeluaran lebih dari 0, pakai tanda "-". Jika 0, jangan pakai tanda apa-apa.
-  const sign = expense > 0 ? "-" : "";
+  // Update Pengeluaran (Tanda - jika ada pengeluaran)
+  const signMinus = expense > 0 ? "-" : "";
+  money_minus.innerText = `${signMinus}${formatRupiah(Math.abs(expense))}`;
 
-  // Tampilkan di HTML dengan logika tanda tadi
-  money_minus.innerText = `${sign}${formatRupiah(Math.abs(expense))}`;
-
-  // Update Grafik Lingkaran
+  // Update Grafik
   renderChart(income, expense);
 }
 
