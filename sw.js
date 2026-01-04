@@ -1,4 +1,4 @@
-const CACHE_NAME = "dompetku-v4";
+const CACHE_NAME = "dompetku-v5";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
@@ -43,4 +43,5 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
 
