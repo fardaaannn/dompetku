@@ -681,3 +681,16 @@ if (btnDownloadPdf) {
 window.removeTransaction = removeTransaction;
 
 form.addEventListener("submit", addTransaction);
+
+// --- FITUR: HANYA ANGKA DAN MINUS ---
+const inputJumlah = document.getElementById("amount"); // Pastikan ID ini sesuai dengan di HTML kamu
+
+if (inputJumlah) {
+  inputJumlah.addEventListener("input", function () {
+    // Regular Expression (Regex) untuk mencari karakter SELAIN angka (0-9) dan minus (-)
+    // /[^0-9-]/g artinya: cari karakter apa saja yang BUKAN 0-9 dan BUKAN -
+
+    // Ganti karakter terlarang tersebut dengan string kosong (dihapus)
+    this.value = this.value.replace(/[^0-9-]/g, "");
+  });
+}
