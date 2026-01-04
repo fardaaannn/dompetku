@@ -112,11 +112,21 @@ h4 {
 }
 
 /* --- FILTER BULAN (Dropdown di kanan) --- */
+/* Update di style.css */
 .filter-container {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between; /* Tombol kiri, filter kanan */
   align-items: center;
-  margin: 20px 0 10px;
+  margin: 20px 0;
+  border-bottom: 1px solid #333;
+  padding-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Biar label "Lihat Bulan" nempel sama dropdownnya di kanan */
+.filter-container label {
+  margin-right: 5px;
 }
 
 .filter-container label {
@@ -550,4 +560,27 @@ select#filter-month {
 select#filter-month:focus {
   outline: none;
   border-color: #777;
+}
+
+/* --- EFEK CAHAYA PUTIH DIAM (STATIS) --- */
+
+/* Target: Tombol Download PDF (#btn-download-pdf) 
+   dan Tombol Tambah Transaksi (tombol di dalam #form) */
+#btn-download-pdf,
+#form .btn {
+  /* Cahaya putih di sekeliling tombol (tidak berkedip) */
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+
+  /* Sedikit border putih agar batas tombol lebih tegas */
+  border: 1px solid rgba(255, 255, 255, 0.5);
+
+  /* Pastikan transisi halus jika disentuh */
+  transition: box-shadow 0.3s ease, transform 0.2s;
+}
+
+/* Efek saat tombol ditekan/disentuh (semakin bersinar) */
+#btn-download-pdf:active,
+#form .btn:active {
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.9);
+  transform: scale(0.98);
 }

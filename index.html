@@ -18,6 +18,9 @@
     />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -68,9 +71,23 @@
         <canvas id="expenseChart"></canvas>
       </div>
 
-      <div class="filter-container">
-        <label for="filter-month">Lihat Bulan:</label>
-        <select id="filter-month">
+      <div class="filter-container" style="flex-direction: column; gap: 10px">
+        <button
+          id="btn-download-pdf"
+          class="btn-small"
+          style="
+            width: 100%; /* Agar tombol memenuhi lebar layar */
+            justify-content: center; /* Teks & Ikon di tengah */
+            background-color: #9c88ff;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+          "
+        >
+          <span>📄</span> Download Laporan Keuangan
+        </button>
+
+        <select id="filter-month" style="width: 100%">
           <option value="all">Semua Waktu</option>
         </select>
       </div>
@@ -85,7 +102,7 @@
           <input
             type="text"
             id="text"
-            placeholder="Contoh: Nasi Goreng, Bensin..."
+            placeholder="Plis masukkan keterangan dulu lee"
           />
         </div>
 
@@ -94,7 +111,13 @@
             >Jumlah <br />(Tambahkan - sebelum nominal angka untuk input
             pengeluaranmu)</label
           >
-          <input type="number" id="amount" placeholder="-50000 atau 100000" />
+          <input
+            type="text"
+            id="amount"
+            inputmode="numeric"
+            placeholder="Masukkan jumlah..."
+            required
+          />
         </div>
         <button class="btn">Tambah Transaksi</button>
       </form>

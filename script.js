@@ -428,6 +428,255 @@ privacyBtn.onclick = () => {
 // Panggil sekali saat start agar ikon sesuai status terakhir
 updatePrivacyIcon();
 
+// --- HELPER: Mengubah ArrayBuffer ke Base64 (Untuk Load Font) ---
+function arrayBufferToBase64(buffer) {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}
+
+// --- HELPER: Download Font Inter dari CDN ---
+async function fetchFont(url) {
+  const response = await fetch(url);
+  const buffer = await response.arrayBuffer();
+  return arrayBufferToBase64(buffer);
+}
+
+// --- FITUR DOWNLOAD PDF (VERSI FINAL & MANDIRI) ---
+const btnDownloadPdf = document.getElementById("btn-download-pdf");
+
+if (btnDownloadPdf) {
+  btnDownloadPdf.addEventListener("click", async () => {
+    // 1. Simpan teks asli & Ubah tombol jadi loading
+    const originalText = btnDownloadPdf.innerHTML;
+    btnDownloadPdf.innerText = "⏳ Memproses...";
+    btnDownloadPdf.disabled = true;
+
+    try {
+      // 2. Cek apakah Library jsPDF sudah ada
+      if (!window.jspdf) {
+        throw new Error(
+          "Library jsPDF belum dimuat. Pastikan internet lancar lalu refresh halaman."
+        );
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // --- FUNGSI PEMBANTU (Ditaruh di dalam agar tidak hilang) ---
+      const arrayBufferToBase64 = (buffer) => {
+        let binary = "";
+        const bytes = new Uint8Array(buffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        return window.btoa(binary);
+      };
+
+      const fetchFont = async (url) => {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Gagal download font");
+        const buffer = await response.arrayBuffer();
+        return arrayBufferToBase64(buffer);
+      };
+
+      // --- LOGIKA SMART FONT LOADING ---
+      let fontName = "helvetica"; // Default (jika internet error)
+      let fontStyleRegular = "normal";
+      let fontStyleBold = "bold";
+
+      try {
+        // Gunakan URL CDN yang lebih stabil (jsDelivr GitHub)
+        const fontRegular = await fetchFont(
+          "https://cdn.jsdelivr.net/gh/rsms/inter@4.0/font-files/Inter-Regular.ttf"
+        );
+        const fontBold = await fetchFont(
+          "https://cdn.jsdelivr.net/gh/rsms/inter@4.0/font-files/Inter-Bold.ttf"
+        );
+
+        // Daftarkan Font
+        doc.addFileToVFS("Inter-Regular.ttf", fontRegular);
+        doc.addFileToVFS("Inter-Bold.ttf", fontBold);
+        doc.addFont("Inter-Regular.ttf", "Inter", "normal");
+        doc.addFont("Inter-Bold.ttf", "Inter", "bold");
+
+        fontName = "Inter"; // Sukses ganti ke Inter
+      } catch (fontError) {
+        console.warn(
+          "Gagal memuat font Inter, menggunakan Helvetica.",
+          fontError
+        );
+        // Kita tidak throw error disini, biar PDF tetap ter-download meski font standar
+      }
+
+      // --- MULAI GAMBAR PDF ---
+      doc.setFont(fontName, fontStyleRegular);
+
+      // Ambil Data
+      // Pastikan fungsi getFilteredTransactions ada di script.js kamu
+      if (typeof getFilteredTransactions !== "function") {
+        throw new Error("Fungsi getFilteredTransactions tidak ditemukan.");
+      }
+
+      const data = getFilteredTransactions();
+      if (data.length === 0) {
+        showIOSAlert("Tidak ada data transaksi untuk dicetak.");
+        btnDownloadPdf.innerHTML = originalText;
+        btnDownloadPdf.disabled = false;
+        return;
+      }
+
+      // Hitung Ringkasan
+      const totalIncome = data
+        .filter((t) => t.amount > 0)
+        .reduce((acc, t) => acc + t.amount, 0);
+      const totalExpense = data
+        .filter((t) => t.amount < 0)
+        .reduce((acc, t) => acc + Math.abs(t.amount), 0);
+      const grandTotal = totalIncome - totalExpense;
+      const formatRupiahPDF = (num) => "Rp" + num.toLocaleString("id-ID");
+
+      // 1. HEADER ATAS (Kotak Hitam Tumpul)
+      doc.setFillColor(18, 18, 18);
+      doc.roundedRect(14, 10, 182, 25, 4, 4, "F");
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.setFont(fontName, fontStyleBold);
+      doc.text("Dompetku", 20, 26);
+
+      // 2. INFO USER
+      doc.setFillColor(248, 248, 248);
+      doc.setDrawColor(230, 230, 230);
+      doc.roundedRect(14, 40, 85, 22, 3, 3, "FD");
+
+      const userName = auth.currentUser
+        ? auth.currentUser.displayName || "Pengguna"
+        : "Tamu";
+      const userEmail = auth.currentUser ? auth.currentUser.email : "-";
+
+      doc.setTextColor(40, 40, 40);
+      doc.setFontSize(10);
+      doc.setFont(fontName, fontStyleBold);
+      doc.text(userName, 19, 48);
+
+      doc.setFontSize(8);
+      doc.setFont(fontName, fontStyleRegular);
+      doc.setTextColor(120, 120, 120);
+      doc.text(userEmail, 19, 55);
+
+      // 3. PERIODE & SALDO
+      const dropdown = document.getElementById("filter-month");
+      const bulanPilihan = dropdown.options[dropdown.selectedIndex].text;
+
+      doc.setFontSize(8);
+      doc.setTextColor(140, 140, 140);
+      doc.text("Periode Transaksi:", 196, 45, { align: "right" });
+
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont(fontName, fontStyleRegular);
+      doc.text(bulanPilihan, 196, 50, { align: "right" });
+
+      doc.setFontSize(8);
+      doc.setTextColor(140, 140, 140);
+      doc.text("Sisa Saldo:", 196, 56, { align: "right" });
+
+      doc.setFontSize(12);
+      doc.setTextColor(0, 170, 19);
+      doc.setFont(fontName, fontStyleBold);
+      doc.text(formatRupiahPDF(grandTotal), 196, 62, { align: "right" });
+
+      // TABEL TRANSAKSI
+      const tableBody = data.map((t) => {
+        let dateStr = "-";
+        let timeStr = "";
+        if (t.createdAt) {
+          const dateObj = t.createdAt.seconds
+            ? new Date(t.createdAt.seconds * 1000)
+            : new Date(t.createdAt);
+          dateStr = dateObj.toLocaleDateString("id-ID");
+          timeStr = dateObj.toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+        const isExpense = t.amount < 0;
+        return [
+          dateStr + "\n" + timeStr,
+          t.text,
+          isExpense ? "Pengeluaran" : "Pemasukan",
+          formatRupiahPDF(Math.abs(t.amount)),
+        ];
+      });
+
+      doc.autoTable({
+        startY: 70,
+        head: [["Tanggal", "Keterangan", "Tipe", "Nominal"]],
+        body: tableBody,
+        theme: "grid",
+        styles: {
+          font: fontName,
+          fontSize: 9,
+          cellPadding: 5,
+          valign: "middle",
+          lineColor: [230, 230, 230],
+          lineWidth: 0.1,
+          textColor: [60, 60, 60],
+        },
+        headStyles: {
+          fillColor: [240, 255, 240],
+          textColor: [30, 30, 30],
+          fontStyle: "bold",
+          halign: "left",
+          lineWidth: 0,
+        },
+        columnStyles: {
+          0: { cellWidth: 35 },
+          1: { cellWidth: "auto" },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 40, halign: "right", fontStyle: "bold" },
+        },
+        didParseCell: function (data) {
+          if (data.section === "body" && data.column.index === 3) {
+            const rawType = tableBody[data.row.index][2];
+            if (rawType === "Pengeluaran") {
+              data.cell.styles.textColor = [220, 50, 50];
+            } else {
+              data.cell.styles.textColor = [0, 150, 0];
+            }
+          }
+        },
+      });
+
+      // Footer
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setFont(fontName, fontStyleRegular);
+        doc.setTextColor(180, 180, 180);
+        doc.text("Dicetak dari Dompetku", 14, 285);
+        doc.text("Halaman " + i, 195, 285, { align: "right" });
+      }
+
+      doc.save(`Laporan_Dompetku_${bulanPilihan}.pdf`);
+    } catch (error) {
+      console.error("Error Detail:", error);
+      // Tampilkan pesan error yang SPESIFIK agar kita tahu masalahnya
+      showIOSAlert("Gagal: " + error.message);
+    } finally {
+      btnDownloadPdf.innerHTML = originalText;
+      btnDownloadPdf.disabled = false;
+    }
+  });
+}
+
 // --- EXPOSE WINDOW ---
 window.removeTransaction = removeTransaction;
 
