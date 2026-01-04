@@ -108,7 +108,7 @@
 
         <div class="form-control">
           <label for="amount"
-            >Jumlah Uang <br />(Tambahkan - sebelum nominal angka untuk input
+            >Jumlah <br />(Tambahkan - sebelum nominal angka untuk input
             pengeluaranmu)</label
           >
           <input type="text" id="amount" placeholder="Masukkan jumlah..." />
@@ -141,18 +141,41 @@
         </div>
       </div>
     </div>
-    <script type="module" src="script.js">
-      if ('serviceWorker' in navigator) {
-          window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-              .then((reg) => console.log('Service Worker berhasil didaftarkan!', reg.scope))
-              .catch((err) => console.log('Gagal mendaftarkan Service Worker:', err));
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("./sw.js")
+            .then((registration) => {
+              console.log("Service Worker terdaftar:", registration.scope);
+
+              // Deteksi jika ada service worker baru yang sedang menginstall
+              registration.onupdatefound = () => {
+                const installingWorker = registration.installing;
+                installingWorker.onstatechange = () => {
+                  if (installingWorker.state === "installed") {
+                    if (navigator.serviceWorker.controller) {
+                      // Versi baru tersedia!
+                      console.log("Update tersedia. Memuat ulang...");
+                      // Opsional: Bisa tampilkan tombol "Update Sekarang" ke user
+                      // Tapi untuk sekarang, kita paksa reload saja:
+                      window.location.reload();
+                    }
+                  }
+                };
+              };
+            })
+            .catch((err) => console.log("Gagal SW:", err));
+
+          // Listener tambahan: Jika controller berubah (karena skipWaiting), reload halaman
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            window.location.reload();
           });
-        }
+        });
+      }
     </script>
     <div style="display: none" id="dev-signature">
       &#67;&#114;&#101;&#97;&#116;&#101;&#100;&#32;&#98;&#121;&#32;&#70;&#97;&#114;&#100;&#97;&#110;&#32;&#65;&#122;&#122;&#117;&#104;&#114;&#105;
     </div>
   </body>
 </html>
-
