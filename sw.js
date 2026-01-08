@@ -33,3 +33,13 @@ self.addEventListener("activate", (event) => {
     })
   );
 });
+
+// 3. Fetch (Cek cache dulu, kalau tidak ada baru ambil dari internet)
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      // Jika ada di cache, pakai itu. Jika tidak, request ke internet.
+      return response || fetch(event.request);
+    })
+  );
+});
