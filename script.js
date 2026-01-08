@@ -74,6 +74,11 @@ const text = document.getElementById("text");
 const amount = document.getElementById("amount");
 const ctx = document.getElementById("expenseChart");
 
+// --- SELECTOR RPG MODE ---
+const healthBar = document.getElementById("health-bar");
+const roastMessage = document.getElementById("roast-message");
+const MAX_HEALTH = 5000000; // Target saldo kamu (misal 5 Juta = Penuh)
+
 // Fungsi untuk memunculkan notifikasi ala iPhone
 function showIOSAlert(pesan) {
   alertMessage.innerText = pesan; // Ubah teks pesan
@@ -254,6 +259,20 @@ async function addTransaction(e) {
     await addDoc(collection(db, "transactions"), transaction);
     text.value = "";
     amount.value = "";
+    if (+amountValue > 0) {
+      // Kalau Pemasukan: Hujan Duit!
+      triggerConfetti();
+      document.getElementById("balance").classList.add("heal-animation");
+      setTimeout(
+        () =>
+          document.getElementById("balance").classList.remove("heal-animation"),
+        500
+      );
+    } else {
+      // Kalau Pengeluaran: Layar Getar!
+      document.body.classList.add("shake-animation");
+      setTimeout(() => document.body.classList.remove("shake-animation"), 500);
+    }
   } catch (error) {
     console.error("Error menambah dokumen: ", error);
     showIOSAlert("Gagal menyimpan data: " + error.message);
@@ -364,6 +383,8 @@ function updateValues(dataTransaksi) {
     : `${signMinus}${formatRupiah(Math.abs(expense))}`;
 
   renderChart(income, expense);
+
+  updateRPGMode(total);
 }
 
 function renderChart(income, expense) {
@@ -674,6 +695,56 @@ if (btnDownloadPdf) {
       btnDownloadPdf.innerHTML = originalText;
       btnDownloadPdf.disabled = false;
     }
+  });
+}
+
+// --- FITUR BARU: RPG & JULID LOGIC ---
+
+// 1. Fungsi Kata-kata Julid
+function getRoast(totalSaldo) {
+  if (totalSaldo < 0) return "💀 Udah minus, masih mau gaya? Sadar diri woy!";
+  if (totalSaldo === 0)
+    return "🕸️ Dompet kosong melompong. Laba-laba aja males bersarang.";
+  if (totalSaldo < 100000)
+    return "🤏 Saldo kritis! Jangan beli kopi mahal-mahal.";
+  if (totalSaldo < 500000)
+    return "😐 Lumayan lah, cukup buat bertahan hidup seminggu.";
+  if (totalSaldo < 2000000)
+    return "📈 Nah gitu dong, mulai kelihatan warnanya.";
+  if (totalSaldo >= 5000000) return "👑 Ampun Sultan! Traktir dong kak!";
+  return "🤔 Hmm, uangnya lari kemana aja nih?";
+}
+
+// 2. Fungsi Update Health Bar & Roasting
+function updateRPGMode(totalSaldo) {
+  // Hitung persentase HP (Maksimal 100%)
+  let percentage = (totalSaldo / MAX_HEALTH) * 100;
+  if (percentage < 0) percentage = 0;
+  if (percentage > 100) percentage = 100;
+
+  // Update Lebar Bar
+  healthBar.style.width = `${percentage}%`;
+
+  // Ganti Warna Bar sesuai kondisi
+  if (percentage < 20) {
+    healthBar.style.background = "#c0392b"; // Merah Bahaya
+  } else if (percentage < 50) {
+    healthBar.style.background = "#f1c40f"; // Kuning Waspada
+  } else {
+    healthBar.style.background = "#2ecc71"; // Hijau Aman
+  }
+
+  // Update Teks Julid
+  roastMessage.innerText = getRoast(totalSaldo);
+}
+
+// 3. Efek Hujan Duit (Confetti)
+function triggerConfetti() {
+  confetti({
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors: ["#2ecc71", "#f1c40f", "#ecf0f1"], // Hijau, Emas, Putih
   });
 }
 

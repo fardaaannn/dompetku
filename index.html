@@ -19,6 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="style.css" />
@@ -52,9 +53,18 @@
         </div>
       </header>
 
-      <h4>Saldo Saat Ini</h4>
-      <h1 id="balance">Rp 0</h1>
+      <div class="rpg-container">
+        <div class="health-bar-container">
+          <div id="health-bar" class="health-bar-fill" style="width: 0%"></div>
+          <span class="hp-text">HP DOMPET</span>
+        </div>
+      </div>
 
+      <h1 id="balance" class="rpg-balance">Rp 0</h1>
+
+      <div id="roast-message" class="roast-box">
+        "Dompet masih aman, belum ada drama."
+      </div>
       <div class="inc-exp-container">
         <div>
           <h4>Pemasukan</h4>
