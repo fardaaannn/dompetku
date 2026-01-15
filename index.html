@@ -10,44 +10,37 @@
       rel="apple-touch-icon"
       href="https://cdn-icons-png.flaticon.com/512/272/272525.png"
     />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <section id="login-screen" class="center-screen">
       <h2>Selamat Datang di<br />Dompetku</h2>
       <p>Catat keuanganmu dengan aman.</p>
-
       <button id="login-btn" class="btn google-btn">Login dengan Google</button>
-
       <button id="anon-login-btn" class="btn anon-btn">
         Masuk Tanpa Akun (Tamu)
       </button>
     </section>
 
     <div id="app-screen" class="container hidden">
-      <header
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        "
-      >
+      <header class="app-header">
         <h2>Catatan Keuangan</h2>
-        <div style="display: flex; gap: 10px">
-          <button id="privacy-btn" class="btn-small" style="font-size: 16px">
-            👁️
-          </button>
+        <div class="header-controls">
+          <button id="privacy-btn" class="btn-small icon-btn">👁️</button>
           <button id="logout-btn" class="btn-small">Logout</button>
         </div>
       </header>
@@ -60,10 +53,10 @@
       </div>
 
       <h1 id="balance" class="rpg-balance">Rp 0</h1>
-
       <div id="roast-message" class="roast-box">
         "Dompet masih aman, belum ada drama."
       </div>
+
       <div class="inc-exp-container">
         <div>
           <h4>Pemasukan</h4>
@@ -74,29 +67,16 @@
           <p id="money-minus" class="money minus">-Rp 0</p>
         </div>
       </div>
-      <div class="inc-exp-container"></div>
 
       <div class="chart-container">
         <canvas id="expenseChart"></canvas>
       </div>
 
-      <div class="filter-container" style="flex-direction: column; gap: 10px">
-        <button
-          id="btn-download-pdf"
-          class="btn-small"
-          style="
-            width: 100%; /* Agar tombol memenuhi lebar layar */
-            justify-content: center; /* Teks & Ikon di tengah */
-            background-color: #9c88ff;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-          "
-        >
+      <div class="filter-container vertical-filter">
+        <button id="btn-download-pdf" class="btn">
           <span>📄</span> Download Laporan Keuangan
         </button>
-
-        <select id="filter-month" style="width: 100%">
+        <select id="filter-month" class="full-width-select">
           <option value="all">Semua Waktu</option>
         </select>
       </div>
@@ -116,10 +96,13 @@
         </div>
 
         <div class="form-control">
-          <label for="amount"
-            >Jumlah Uang <br />(Tambahkan - sebelum nominal angka untuk input
-            pengeluaranmu)</label
-          >
+          <label for="amount">
+            Jumlah Uang <br />
+            <small
+              >(Tambahkan - sebelum nominal angka untuk input
+              pengeluaranmu)</small
+            >
+          </label>
           <input
             type="text"
             id="amount"
@@ -131,6 +114,7 @@
     </div>
 
     <script type="module" src="script.js"></script>
+
     <div id="ios-modal" class="ios-modal-overlay hidden">
       <div class="ios-modal">
         <div class="ios-modal-text">
@@ -143,6 +127,7 @@
         </div>
       </div>
     </div>
+
     <div id="ios-alert-modal" class="ios-modal-overlay hidden">
       <div class="ios-modal">
         <div class="ios-modal-text">
@@ -154,6 +139,7 @@
         </div>
       </div>
     </div>
+
     <script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
@@ -161,32 +147,28 @@
             .register("./sw.js")
             .then((registration) => {
               console.log("Service Worker terdaftar:", registration.scope);
-
-              // Deteksi jika ada service worker baru yang sedang menginstall
               registration.onupdatefound = () => {
                 const installingWorker = registration.installing;
                 installingWorker.onstatechange = () => {
-                  if (installingWorker.state === "installed") {
-                    if (navigator.serviceWorker.controller) {
-                      // Versi baru tersedia!
-                      console.log("Update tersedia. Memuat ulang...");
-                      // Opsional: Bisa tampilkan tombol "Update Sekarang" ke user
-                      // Tapi untuk sekarang, kita paksa reload saja:
-                      window.location.reload();
-                    }
+                  if (
+                    installingWorker.state === "installed" &&
+                    navigator.serviceWorker.controller
+                  ) {
+                    console.log("Update tersedia. Memuat ulang...");
+                    window.location.reload();
                   }
                 };
               };
             })
             .catch((err) => console.log("Gagal SW:", err));
 
-          // Listener tambahan: Jika controller berubah (karena skipWaiting), reload halaman
           navigator.serviceWorker.addEventListener("controllerchange", () => {
             window.location.reload();
           });
         });
       }
     </script>
+
     <div style="display: none" id="dev-signature">
       &#67;&#114;&#101;&#97;&#116;&#101;&#100;&#32;&#98;&#121;&#32;&#70;&#97;&#114;&#100;&#97;&#110;&#32;&#65;&#122;&#122;&#117;&#104;&#114;&#105;
     </div>

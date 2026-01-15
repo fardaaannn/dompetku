@@ -3,6 +3,7 @@ console.log(
   "\x43\x72\x65\x61\x74\x65\x64\x20\x62\x79\x20\x46\x61\x72\x64\x61\x6E\x20\x41\x7A\x7A\x75\x68\x72\x69"
 );
 
+// --- IMPORTS ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getFirestore,
@@ -26,7 +27,7 @@ import {
   signInAnonymously,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// --- KONFIGURASI FIREBASE ---
+// --- FIREBASE CONFIG ---
 const firebaseConfig = {
   apiKey: "AIzaSyCFPnr_wwe8a3KsWQFyf9Y_hjj81WzOHtU",
   authDomain: "dompet-ku-web.firebaseapp.com",
@@ -37,271 +38,221 @@ const firebaseConfig = {
   measurementId: "G-GEJTCBX0DX",
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-// --- AKTIFKAN DATABASE OFFLINE ---
-enableIndexedDbPersistence(db).catch((err) => {
-  if (err.code == "failed-precondition") {
-    console.log("Persistence gagal: Mungkin tab lain sedang terbuka.");
-  } else if (err.code == "unimplemented") {
-    console.log("Browser tidak mendukung offline persistence.");
-  }
-});
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// --- SELECTOR DOM ---
-const alertModal = document.getElementById("ios-alert-modal");
-const alertMessage = document.getElementById("alert-message");
-const alertOkBtn = document.getElementById("alert-ok-btn");
-const loginScreen = document.getElementById("login-screen");
-const appScreen = document.getElementById("app-screen");
-const loginBtn = document.getElementById("login-btn");
-const anonLoginBtn = document.getElementById("anon-login-btn");
-const logoutBtn = document.getElementById("logout-btn");
+// Enable Offline Persistence
+enableIndexedDbPersistence(db).catch((err) => {
+  console.log("Persistence warning:", err.code);
+});
 
-// UPDATE: SELECTOR TOMBOL PRIVASI
-const privacyBtn = document.getElementById("privacy-btn");
-// Simpan status sensor (default: false jika belum ada)
-let isPrivacyMode = localStorage.getItem("isPrivacyMode") === "true";
+// --- DOM ELEMENTS (Centralized) ---
+const DOM = {
+  loginScreen: document.getElementById("login-screen"),
+  appScreen: document.getElementById("app-screen"),
+  loginBtn: document.getElementById("login-btn"),
+  anonLoginBtn: document.getElementById("anon-login-btn"),
+  logoutBtn: document.getElementById("logout-btn"),
 
-const balance = document.getElementById("balance");
-const money_plus = document.getElementById("money-plus");
-const money_minus = document.getElementById("money-minus");
-const list = document.getElementById("list");
-const form = document.getElementById("form");
-const text = document.getElementById("text");
-const amount = document.getElementById("amount");
-const ctx = document.getElementById("expenseChart");
+  privacyBtn: document.getElementById("privacy-btn"),
+  balance: document.getElementById("balance"),
+  moneyPlus: document.getElementById("money-plus"),
+  moneyMinus: document.getElementById("money-minus"),
 
-// --- SELECTOR RPG MODE ---
-const healthBar = document.getElementById("health-bar");
-const roastMessage = document.getElementById("roast-message");
-const MAX_HEALTH = 5000000; // Target saldo kamu (misal 5 Juta = Penuh)
+  list: document.getElementById("list"),
+  form: document.getElementById("form"),
+  textInput: document.getElementById("text"),
+  amountInput: document.getElementById("amount"),
+  filterMonth: document.getElementById("filter-month"),
 
-// Fungsi untuk memunculkan notifikasi ala iPhone
-function showIOSAlert(pesan) {
-  alertMessage.innerText = pesan; // Ubah teks pesan
-  alertModal.classList.remove("hidden"); // Munculkan modal
-}
+  chartCtx: document.getElementById("expenseChart"),
+  btnDownloadPdf: document.getElementById("btn-download-pdf"),
 
-// Tutup modal saat tombol OKE ditekan
-alertOkBtn.onclick = () => {
-  alertModal.classList.add("hidden");
+  // Modals
+  alertModal: document.getElementById("ios-alert-modal"),
+  alertMessage: document.getElementById("alert-message"),
+  alertOkBtn: document.getElementById("alert-ok-btn"),
+  deleteModal: document.getElementById("ios-modal"),
+  modalCancel: document.getElementById("modal-cancel"),
+  modalConfirm: document.getElementById("modal-confirm"),
+
+  // RPG
+  healthBar: document.getElementById("health-bar"),
+  roastMessage: document.getElementById("roast-message"),
 };
 
-// TAMBAHAN SELECTOR MODAL IPHONE
-const iosModal = document.getElementById("ios-modal");
-const modalCancelBtn = document.getElementById("modal-cancel");
-const modalConfirmBtn = document.getElementById("modal-confirm");
+// --- STATE MANAGEMENT ---
+let state = {
+  transactions: [],
+  unsubscribe: null,
+  chartInstance: null,
+  deleteId: null,
+  isPrivacyMode: localStorage.getItem("isPrivacyMode") === "true",
+};
 
-const filterMonth = document.getElementById("filter-month");
+const RPG_CONFIG = {
+  MAX_HEALTH: 5000000,
+};
 
-let transactions = [];
-let unsubscribe;
-let myChart = null;
-
-// --- FUNGSI FORMATTING ---
-function formatRupiah(angka) {
+// --- HELPER FUNCTIONS ---
+const formatRupiah = (angka) => {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     minimumFractionDigits: 0,
   }).format(angka);
-}
-
-// UPDATE: Fungsi Helper untuk Sensor Nominal
-function formatMoneyDisplay(angka) {
-  if (isPrivacyMode) {
-    return "Rp ••••••"; // Tampilan sensor
-  }
-  return formatRupiah(angka); // Tampilan asli
-}
-
-function getMonthYear(firebaseTimestamp) {
-  if (!firebaseTimestamp) return "";
-  const date = firebaseTimestamp.toDate();
-  return date.toLocaleString("id-ID", { month: "long", year: "numeric" });
-}
-
-function formatFullDate(firebaseTimestamp) {
-  if (!firebaseTimestamp) return "Baru saja...";
-  const date = firebaseTimestamp.toDate();
-  return date.toLocaleString("id-ID", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-}
-
-// --- EVENT LOGIN & LOGOUT ---
-loginBtn.onclick = () => signInWithPopup(auth, provider);
-
-// Tambahan untuk Login Anonymous
-anonLoginBtn.onclick = () => {
-  signInAnonymously(auth)
-    .then(() => {
-      console.log("Berhasil masuk sebagai tamu");
-    })
-    .catch((error) => {
-      console.error("Gagal login tamu:", error);
-      alert("Gagal masuk: " + error.message);
-    });
 };
 
-logoutBtn.onclick = () => signOut(auth);
+const formatMoneyDisplay = (angka) => {
+  if (state.isPrivacyMode) return "Rp ••••••";
+  return formatRupiah(angka);
+};
 
-// --- MONITOR STATUS USER ---
+const getMonthYear = (timestamp) => {
+  if (!timestamp) return "";
+  return timestamp
+    .toDate()
+    .toLocaleString("id-ID", { month: "long", year: "numeric" });
+};
+
+// --- UI NOTIFICATIONS (iOS Style) ---
+function showIOSAlert(message) {
+  DOM.alertMessage.innerText = message;
+  DOM.alertModal.classList.remove("hidden");
+}
+
+DOM.alertOkBtn.onclick = () => DOM.alertModal.classList.add("hidden");
+
+// --- CORE APP LOGIC ---
+
+// 1. Auth Listener
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    // --- UPDATE: Menangani Nama User (Google vs Tamu) ---
-    const namaUser = user.displayName ? user.displayName : "Tamu (Anonymous)";
-    console.log("User masuk:", namaUser);
+    const userName = user.displayName || "Tamu (Anonymous)";
+    console.log("User Logged In:", userName);
 
-    loginScreen.classList.add("hidden");
-    appScreen.classList.remove("hidden");
-
-    const q = query(
-      collection(db, "transactions"),
-      where("uid", "==", user.uid),
-      orderBy("createdAt", "desc")
-    );
-
-    unsubscribe = onSnapshot(q, (snapshot) => {
-      transactions = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      populateFilterOptions();
-      init();
-    });
+    DOM.loginScreen.classList.add("hidden");
+    DOM.appScreen.classList.remove("hidden");
+    loadTransactions(user.uid);
   } else {
-    loginScreen.classList.remove("hidden");
-    appScreen.classList.add("hidden");
-    if (unsubscribe) unsubscribe();
-    transactions = [];
-    init();
+    DOM.loginScreen.classList.remove("hidden");
+    DOM.appScreen.classList.add("hidden");
+    if (state.unsubscribe) state.unsubscribe();
+    state.transactions = [];
+    renderApp();
   }
 });
 
-// --- LOGIKA FILTER ---
-function populateFilterOptions() {
-  const currentSelection = filterMonth.value;
-  const months = new Set();
-  transactions.forEach((t) => {
-    if (t.createdAt) {
-      months.add(getMonthYear(t.createdAt));
-    }
-  });
+// 2. Load Transactions (Realtime)
+function loadTransactions(uid) {
+  const q = query(
+    collection(db, "transactions"),
+    where("uid", "==", uid),
+    orderBy("createdAt", "desc")
+  );
 
-  filterMonth.innerHTML = '<option value="all">Semua Waktu</option>';
-  months.forEach((month) => {
-    const option = document.createElement("option");
-    option.value = month;
-    option.innerText = month;
-    filterMonth.appendChild(option);
-  });
-
-  if ([...months].includes(currentSelection) || currentSelection === "all") {
-    filterMonth.value = currentSelection;
-  } else {
-    filterMonth.value = "all";
-  }
-}
-
-function getFilteredTransactions() {
-  const selectedMonth = filterMonth.value;
-  if (selectedMonth === "all") {
-    return transactions;
-  }
-  return transactions.filter((t) => {
-    return t.createdAt && getMonthYear(t.createdAt) === selectedMonth;
+  state.unsubscribe = onSnapshot(q, (snapshot) => {
+    state.transactions = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    populateFilterOptions();
+    renderApp();
   });
 }
 
-filterMonth.addEventListener("change", init);
-
-// --- FUNGSI TAMBAH TRANSAKSI ---
+// 3. Add Transaction
 async function addTransaction(e) {
   e.preventDefault();
+  const textVal = DOM.textInput.value.trim();
+  const amountVal = DOM.amountInput.value.trim();
 
-  const textValue = text.value.trim();
-  const amountValue = amount.value.trim();
-
-  // --- VALIDASI INPUT ---
-  if (textValue === "" && amountValue === "") {
+  if (!textVal || !amountVal) {
     showIOSAlert("Aduhh, isi keterangan dan jumlah uangmu dulu lee");
     return;
   }
-  if (textValue !== "" && amountValue === "") {
-    showIOSAlert("Aduhh, isi jumlah uangmu dulu lee");
-    return;
-  }
-  if (textValue === "" && amountValue !== "") {
-    showIOSAlert("Aduhh, isi keteranganmu dulu lee");
-    return;
-  }
-
-  // --- SIMPAN KE FIREBASE ---
-  const transaction = {
-    text: textValue,
-    amount: +amountValue,
-    uid: auth.currentUser.uid,
-    createdAt: serverTimestamp(),
-  };
 
   try {
-    await addDoc(collection(db, "transactions"), transaction);
-    text.value = "";
-    amount.value = "";
-    if (+amountValue > 0) {
-      // Kalau Pemasukan: Hujan Duit!
+    const amountNum = +amountVal;
+    await addDoc(collection(db, "transactions"), {
+      text: textVal,
+      amount: amountNum,
+      uid: auth.currentUser.uid,
+      createdAt: serverTimestamp(),
+    });
+
+    DOM.textInput.value = "";
+    DOM.amountInput.value = "";
+
+    // Trigger Effects
+    if (amountNum > 0) {
       triggerConfetti();
-      document.getElementById("balance").classList.add("heal-animation");
-      setTimeout(
-        () =>
-          document.getElementById("balance").classList.remove("heal-animation"),
-        500
-      );
+      triggerHealAnimation();
     } else {
-      // Kalau Pengeluaran: Layar Getar!
-      document.body.classList.add("shake-animation");
-      setTimeout(() => document.body.classList.remove("shake-animation"), 500);
+      triggerShakeAnimation();
     }
   } catch (error) {
-    console.error("Error menambah dokumen: ", error);
-    showIOSAlert("Gagal menyimpan data: " + error.message);
+    showIOSAlert("Gagal menyimpan: " + error.message);
   }
 }
 
-// --- VARIABEL UNTUK MENYIMPAN ID TRANSAKSI SEMENTARA ---
-let deleteId = null;
-
-function removeTransaction(id) {
-  deleteId = id;
-  iosModal.classList.remove("hidden");
-}
-
-modalCancelBtn.onclick = () => {
-  iosModal.classList.add("hidden");
-  deleteId = null;
+// 4. Delete Transaction Logic
+window.removeTransaction = (id) => {
+  state.deleteId = id;
+  DOM.deleteModal.classList.remove("hidden");
 };
 
-modalConfirmBtn.onclick = async () => {
-  if (deleteId) {
-    await deleteDoc(doc(db, "transactions", deleteId));
-    iosModal.classList.add("hidden");
-    deleteId = null;
+DOM.modalCancel.onclick = () => {
+  DOM.deleteModal.classList.add("hidden");
+  state.deleteId = null;
+};
+
+DOM.modalConfirm.onclick = async () => {
+  if (state.deleteId) {
+    await deleteDoc(doc(db, "transactions", state.deleteId));
+    DOM.deleteModal.classList.add("hidden");
+    state.deleteId = null;
   }
 };
 
-// --- TAMPILAN DOM & CHART ---
-function addTransactionDOM(transaction) {
+// --- RENDER FUNCTIONS ---
+
+function renderApp() {
+  DOM.list.innerHTML = "";
+  const filtered = getFilteredTransactions();
+
+  // Render List
+  filtered.forEach(renderTransactionItem);
+
+  // Calculate Totals
+  const amounts = filtered.map((t) => t.amount);
+  const total = amounts.reduce((acc, item) => acc + item, 0);
+  const income = amounts
+    .filter((item) => item > 0)
+    .reduce((acc, item) => acc + item, 0);
+  const expense =
+    amounts.filter((item) => item < 0).reduce((acc, item) => acc + item, 0) *
+    -1;
+
+  // Update UI Text
+  DOM.balance.innerText = formatMoneyDisplay(total);
+  DOM.moneyPlus.innerText = state.isPrivacyMode
+    ? "+Rp ••••••"
+    : `+${formatRupiah(income)}`;
+  DOM.moneyMinus.innerText = state.isPrivacyMode
+    ? "-Rp ••••••"
+    : `-${formatRupiah(expense)}`;
+
+  // Update Modules
+  updateChart(income, expense, total);
+  updateRPG(total);
+  updatePrivacyIcon();
+}
+
+function renderTransactionItem(transaction) {
   const sign = transaction.amount < 0 ? "-" : "+";
   const item = document.createElement("li");
   item.classList.add(transaction.amount < 0 ? "minus" : "plus");
@@ -321,8 +272,7 @@ function addTransactionDOM(transaction) {
     });
   }
 
-  // UPDATE: LOGIKA SENSOR DI LIST TRANSAKSI
-  const amountDisplay = isPrivacyMode
+  const amountDisplay = state.isPrivacyMode
     ? "Rp ••••••"
     : formatRupiah(Math.abs(transaction.amount));
 
@@ -334,66 +284,30 @@ function addTransactionDOM(transaction) {
         <span class="tx-date">${dateString}</span>
       </div>
     </div>
-    
     <button class="delete-btn" onclick="removeTransaction('${transaction.id}')">
       <span class="trash-icon">🗑️</span>
     </button>
   `;
 
+  // Mobile touch handling
   item.addEventListener("click", (e) => {
     if (e.target.closest(".delete-btn")) return;
-    const isActive = item.classList.contains("active-mobile");
-    document.querySelectorAll(".list li").forEach((el) => {
-      el.classList.remove("active-mobile");
-    });
-    if (!isActive) {
-      item.classList.add("active-mobile");
-    }
+    document
+      .querySelectorAll(".list li")
+      .forEach((el) => el.classList.remove("active-mobile"));
+    item.classList.add("active-mobile");
   });
 
-  list.appendChild(item);
+  DOM.list.appendChild(item);
 }
 
-// --- UPDATE VALUES (HITUNG SALDO) ---
-function updateValues(dataTransaksi) {
-  const amounts = dataTransaksi.map((transaction) => transaction.amount);
-  const total = amounts.reduce((acc, item) => (acc += item), 0);
-  const income = amounts
-    .filter((item) => item > 0)
-    .reduce((acc, item) => (acc += item), 0);
-  const expense =
-    amounts.filter((item) => item < 0).reduce((acc, item) => (acc += item), 0) *
-    -1;
-
-  // --- UPDATE: LOGIKA SENSOR DI SALDO UTAMA, PEMASUKAN, PENGELUARAN ---
-
-  // Saldo Utama
-  balance.innerText = formatMoneyDisplay(total);
-
-  // Pemasukan
-  const signPlus = income > 0 ? "+" : "";
-  money_plus.innerText = isPrivacyMode
-    ? "+Rp ••••••"
-    : `${signPlus}${formatRupiah(income)}`;
-
-  // Pengeluaran
-  const signMinus = expense > 0 ? "-" : "";
-  money_minus.innerText = isPrivacyMode
-    ? "-Rp ••••••"
-    : `${signMinus}${formatRupiah(Math.abs(expense))}`;
-
-  renderChart(income, expense);
-
-  updateRPGMode(total);
-}
-
-function renderChart(income, expense) {
-  if (myChart) {
-    myChart.destroy();
+// --- CHART & GRAPHICS ---
+function updateChart(income, expense, total) {
+  if (state.chartInstance) {
+    state.chartInstance.destroy();
   }
-  const total = income + expense;
 
-  myChart = new Chart(ctx, {
+  state.chartInstance = new Chart(DOM.chartCtx, {
     type: "doughnut",
     plugins: [ChartDataLabels],
     data: {
@@ -416,8 +330,8 @@ function renderChart(income, expense) {
           color: "#fff",
           font: { weight: "bold", size: 14 },
           formatter: (value) => {
-            if (total === 0) return "0%";
-            return ((value * 100) / total).toFixed(1) + "%";
+            if (income + expense === 0) return "0%";
+            return ((value * 100) / (income + expense)).toFixed(1) + "%";
           },
         },
       },
@@ -425,343 +339,277 @@ function renderChart(income, expense) {
   });
 }
 
-function init() {
-  list.innerHTML = "";
-  const filteredData = getFilteredTransactions();
-  filteredData.forEach(addTransactionDOM);
-  updateValues(filteredData);
-}
+// --- FILTER LOGIC ---
+function populateFilterOptions() {
+  const currentSelection = DOM.filterMonth.value;
+  const months = new Set();
 
-// --- LOGIKA TOMBOL PRIVASI / SENSOR ---
-function updatePrivacyIcon() {
-  // Ganti ikon mata terbuka (lihat) / monyet (tutup mata)
-  privacyBtn.innerText = isPrivacyMode ? "🙈" : "👁️";
-}
-
-privacyBtn.onclick = () => {
-  isPrivacyMode = !isPrivacyMode; // Balik status
-  localStorage.setItem("isPrivacyMode", isPrivacyMode); // Simpan di browser
-
-  updatePrivacyIcon();
-  init(); // Render ulang semua data
-};
-
-// Panggil sekali saat start agar ikon sesuai status terakhir
-updatePrivacyIcon();
-
-// --- HELPER: Mengubah ArrayBuffer ke Base64 (Untuk Load Font) ---
-function arrayBufferToBase64(buffer) {
-  let binary = "";
-  const bytes = new Uint8Array(buffer);
-  const len = bytes.byteLength;
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return window.btoa(binary);
-}
-
-// --- HELPER: Download Font Inter dari CDN ---
-async function fetchFont(url) {
-  const response = await fetch(url);
-  const buffer = await response.arrayBuffer();
-  return arrayBufferToBase64(buffer);
-}
-
-// --- FITUR DOWNLOAD PDF (VERSI FINAL & MANDIRI) ---
-const btnDownloadPdf = document.getElementById("btn-download-pdf");
-
-if (btnDownloadPdf) {
-  btnDownloadPdf.addEventListener("click", async () => {
-    // 1. Simpan teks asli & Ubah tombol jadi loading
-    const originalText = btnDownloadPdf.innerHTML;
-    btnDownloadPdf.innerText = "⏳ Memproses...";
-    btnDownloadPdf.disabled = true;
-
-    try {
-      // 2. Cek apakah Library jsPDF sudah ada
-      if (!window.jspdf) {
-        throw new Error(
-          "Library jsPDF belum dimuat. Pastikan internet lancar lalu refresh halaman."
-        );
-      }
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      // --- FUNGSI PEMBANTU (Ditaruh di dalam agar tidak hilang) ---
-      const arrayBufferToBase64 = (buffer) => {
-        let binary = "";
-        const bytes = new Uint8Array(buffer);
-        const len = bytes.byteLength;
-        for (let i = 0; i < len; i++) {
-          binary += String.fromCharCode(bytes[i]);
-        }
-        return window.btoa(binary);
-      };
-
-      const fetchFont = async (url) => {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Gagal download font");
-        const buffer = await response.arrayBuffer();
-        return arrayBufferToBase64(buffer);
-      };
-
-      // --- LOGIKA SMART FONT LOADING ---
-      let fontName = "helvetica"; // Default (jika internet error)
-      let fontStyleRegular = "normal";
-      let fontStyleBold = "bold";
-
-      try {
-        // Gunakan URL CDN yang lebih stabil (jsDelivr GitHub)
-        const fontRegular = await fetchFont(
-          "https://cdn.jsdelivr.net/gh/rsms/inter@4.0/font-files/Inter-Regular.ttf"
-        );
-        const fontBold = await fetchFont(
-          "https://cdn.jsdelivr.net/gh/rsms/inter@4.0/font-files/Inter-Bold.ttf"
-        );
-
-        // Daftarkan Font
-        doc.addFileToVFS("Inter-Regular.ttf", fontRegular);
-        doc.addFileToVFS("Inter-Bold.ttf", fontBold);
-        doc.addFont("Inter-Regular.ttf", "Inter", "normal");
-        doc.addFont("Inter-Bold.ttf", "Inter", "bold");
-
-        fontName = "Inter"; // Sukses ganti ke Inter
-      } catch (fontError) {
-        console.warn(
-          "Gagal memuat font Inter, menggunakan Helvetica.",
-          fontError
-        );
-        // Kita tidak throw error disini, biar PDF tetap ter-download meski font standar
-      }
-
-      // --- MULAI GAMBAR PDF ---
-      doc.setFont(fontName, fontStyleRegular);
-
-      // Ambil Data
-      // Pastikan fungsi getFilteredTransactions ada di script.js kamu
-      if (typeof getFilteredTransactions !== "function") {
-        throw new Error("Fungsi getFilteredTransactions tidak ditemukan.");
-      }
-
-      const data = getFilteredTransactions();
-      if (data.length === 0) {
-        showIOSAlert("Tidak ada data transaksi untuk dicetak.");
-        btnDownloadPdf.innerHTML = originalText;
-        btnDownloadPdf.disabled = false;
-        return;
-      }
-
-      // Hitung Ringkasan
-      const totalIncome = data
-        .filter((t) => t.amount > 0)
-        .reduce((acc, t) => acc + t.amount, 0);
-      const totalExpense = data
-        .filter((t) => t.amount < 0)
-        .reduce((acc, t) => acc + Math.abs(t.amount), 0);
-      const grandTotal = totalIncome - totalExpense;
-      const formatRupiahPDF = (num) => "Rp" + num.toLocaleString("id-ID");
-
-      // 1. HEADER ATAS (Kotak Hitam Tumpul)
-      doc.setFillColor(18, 18, 18);
-      doc.roundedRect(14, 10, 182, 25, 4, 4, "F");
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
-      doc.setFont(fontName, fontStyleBold);
-      doc.text("Dompetku", 20, 26);
-
-      // 2. INFO USER
-      doc.setFillColor(248, 248, 248);
-      doc.setDrawColor(230, 230, 230);
-      doc.roundedRect(14, 40, 85, 22, 3, 3, "FD");
-
-      const userName = auth.currentUser
-        ? auth.currentUser.displayName || "Pengguna"
-        : "Tamu";
-      const userEmail = auth.currentUser ? auth.currentUser.email : "-";
-
-      doc.setTextColor(40, 40, 40);
-      doc.setFontSize(10);
-      doc.setFont(fontName, fontStyleBold);
-      doc.text(userName, 19, 48);
-
-      doc.setFontSize(8);
-      doc.setFont(fontName, fontStyleRegular);
-      doc.setTextColor(120, 120, 120);
-      doc.text(userEmail, 19, 55);
-
-      // 3. PERIODE & SALDO
-      const dropdown = document.getElementById("filter-month");
-      const bulanPilihan = dropdown.options[dropdown.selectedIndex].text;
-
-      doc.setFontSize(8);
-      doc.setTextColor(140, 140, 140);
-      doc.text("Periode Transaksi:", 196, 45, { align: "right" });
-
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      doc.setFont(fontName, fontStyleRegular);
-      doc.text(bulanPilihan, 196, 50, { align: "right" });
-
-      doc.setFontSize(8);
-      doc.setTextColor(140, 140, 140);
-      doc.text("Sisa Saldo:", 196, 56, { align: "right" });
-
-      doc.setFontSize(12);
-      doc.setTextColor(0, 170, 19);
-      doc.setFont(fontName, fontStyleBold);
-      doc.text(formatRupiahPDF(grandTotal), 196, 62, { align: "right" });
-
-      // TABEL TRANSAKSI
-      const tableBody = data.map((t) => {
-        let dateStr = "-";
-        let timeStr = "";
-        if (t.createdAt) {
-          const dateObj = t.createdAt.seconds
-            ? new Date(t.createdAt.seconds * 1000)
-            : new Date(t.createdAt);
-          dateStr = dateObj.toLocaleDateString("id-ID");
-          timeStr = dateObj.toLocaleTimeString("id-ID", {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        }
-        const isExpense = t.amount < 0;
-        return [
-          dateStr + "\n" + timeStr,
-          t.text,
-          isExpense ? "Pengeluaran" : "Pemasukan",
-          formatRupiahPDF(Math.abs(t.amount)),
-        ];
-      });
-
-      doc.autoTable({
-        startY: 70,
-        head: [["Tanggal", "Keterangan", "Tipe", "Nominal"]],
-        body: tableBody,
-        theme: "grid",
-        styles: {
-          font: fontName,
-          fontSize: 9,
-          cellPadding: 5,
-          valign: "middle",
-          lineColor: [230, 230, 230],
-          lineWidth: 0.1,
-          textColor: [60, 60, 60],
-        },
-        headStyles: {
-          fillColor: [240, 255, 240],
-          textColor: [30, 30, 30],
-          fontStyle: "bold",
-          halign: "left",
-          lineWidth: 0,
-        },
-        columnStyles: {
-          0: { cellWidth: 35 },
-          1: { cellWidth: "auto" },
-          2: { cellWidth: 30 },
-          3: { cellWidth: 40, halign: "right", fontStyle: "bold" },
-        },
-        didParseCell: function (data) {
-          if (data.section === "body" && data.column.index === 3) {
-            const rawType = tableBody[data.row.index][2];
-            if (rawType === "Pengeluaran") {
-              data.cell.styles.textColor = [220, 50, 50];
-            } else {
-              data.cell.styles.textColor = [0, 150, 0];
-            }
-          }
-        },
-      });
-
-      // Footer
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setFont(fontName, fontStyleRegular);
-        doc.setTextColor(180, 180, 180);
-        doc.text("Dicetak dari Dompetku", 14, 285);
-        doc.text("Halaman " + i, 195, 285, { align: "right" });
-      }
-
-      doc.save(`Laporan_Dompetku_${bulanPilihan}.pdf`);
-    } catch (error) {
-      console.error("Error Detail:", error);
-      // Tampilkan pesan error yang SPESIFIK agar kita tahu masalahnya
-      showIOSAlert("Gagal: " + error.message);
-    } finally {
-      btnDownloadPdf.innerHTML = originalText;
-      btnDownloadPdf.disabled = false;
-    }
+  state.transactions.forEach((t) => {
+    if (t.createdAt) months.add(getMonthYear(t.createdAt));
   });
-}
 
-// --- FITUR BARU: RPG & JULID LOGIC ---
+  DOM.filterMonth.innerHTML = '<option value="all">Semua Waktu</option>';
+  months.forEach((month) => {
+    const option = document.createElement("option");
+    option.value = month;
+    option.innerText = month;
+    DOM.filterMonth.appendChild(option);
+  });
 
-// 1. Fungsi Kata-kata Julid
-function getRoast(totalSaldo) {
-  if (totalSaldo < 0) return "💀 Udah minus, masih mau gaya? Sadar diri woy!";
-  if (totalSaldo === 0)
-    return "🕸️ Dompet kosong melompong. Laba-laba aja males bersarang.";
-  if (totalSaldo < 100000)
-    return "🤏 Saldo kritis! Jangan beli kopi mahal-mahal.";
-  if (totalSaldo < 500000)
-    return "😐 Lumayan lah, cukup buat bertahan hidup seminggu.";
-  if (totalSaldo < 2000000)
-    return "📈 Nah gitu dong, mulai kelihatan warnanya.";
-  if (totalSaldo >= 5000000) return "👑 Ampun Sultan! Traktir dong kak!";
-  return "🤔 Hmm, uangnya lari kemana aja nih?";
-}
-
-// 2. Fungsi Update Health Bar & Roasting
-function updateRPGMode(totalSaldo) {
-  // Hitung persentase HP (Maksimal 100%)
-  let percentage = (totalSaldo / MAX_HEALTH) * 100;
-  if (percentage < 0) percentage = 0;
-  if (percentage > 100) percentage = 100;
-
-  // Update Lebar Bar
-  healthBar.style.width = `${percentage}%`;
-
-  // Ganti Warna Bar sesuai kondisi
-  if (percentage < 20) {
-    healthBar.style.background = "#c0392b"; // Merah Bahaya
-  } else if (percentage < 50) {
-    healthBar.style.background = "#f1c40f"; // Kuning Waspada
-  } else {
-    healthBar.style.background = "#2ecc71"; // Hijau Aman
+  if ([...months].includes(currentSelection)) {
+    DOM.filterMonth.value = currentSelection;
   }
-
-  // Update Teks Julid
-  roastMessage.innerText = getRoast(totalSaldo);
 }
 
-// 3. Efek Hujan Duit (Confetti)
+function getFilteredTransactions() {
+  const selected = DOM.filterMonth.value;
+  if (selected === "all") return state.transactions;
+  return state.transactions.filter(
+    (t) => getMonthYear(t.createdAt) === selected
+  );
+}
+
+DOM.filterMonth.addEventListener("change", renderApp);
+
+// --- RPG & GAMIFICATION ---
+function updateRPG(totalSaldo) {
+  // Health Bar
+  let percentage = (totalSaldo / RPG_CONFIG.MAX_HEALTH) * 100;
+  percentage = Math.max(0, Math.min(100, percentage)); // Clamp 0-100
+
+  DOM.healthBar.style.width = `${percentage}%`;
+
+  if (percentage < 20) DOM.healthBar.style.background = "#c0392b";
+  else if (percentage < 50) DOM.healthBar.style.background = "#f1c40f";
+  else DOM.healthBar.style.background = "#2ecc71";
+
+  // Roasting Text
+  let text = "🤔 Hmm, uangnya lari kemana aja nih?";
+  if (totalSaldo < 0) text = "💀 Udah minus, masih mau gaya? Sadar diri woy!";
+  else if (totalSaldo === 0)
+    text = "🕸️ Dompet kosong melompong. Laba-laba aja males bersarang.";
+  else if (totalSaldo < 100000)
+    text = "🤏 Saldo kritis! Jangan beli kopi mahal-mahal.";
+  else if (totalSaldo < 500000)
+    text = "😐 Lumayan lah, cukup buat bertahan hidup seminggu.";
+  else if (totalSaldo < 2000000)
+    text = "📈 Nah gitu dong, mulai kelihatan warnanya.";
+  else if (totalSaldo >= 5000000) text = "👑 Ampun Sultan! Traktir dong kak!";
+
+  DOM.roastMessage.innerText = text;
+}
+
 function triggerConfetti() {
   confetti({
     particleCount: 100,
     spread: 70,
     origin: { y: 0.6 },
-    colors: ["#2ecc71", "#f1c40f", "#ecf0f1"], // Hijau, Emas, Putih
+    colors: ["#2ecc71", "#f1c40f", "#ecf0f1"],
   });
 }
 
-// --- EXPOSE WINDOW ---
-window.removeTransaction = removeTransaction;
+function triggerShakeAnimation() {
+  document.body.classList.add("shake-animation");
+  setTimeout(() => document.body.classList.remove("shake-animation"), 500);
+}
 
-form.addEventListener("submit", addTransaction);
+function triggerHealAnimation() {
+  DOM.balance.classList.add("heal-animation");
+  setTimeout(() => DOM.balance.classList.remove("heal-animation"), 500);
+}
 
-// --- FITUR: HANYA ANGKA DAN MINUS ---
-const inputJumlah = document.getElementById("amount"); // Pastikan ID ini sesuai dengan di HTML kamu
+// --- PRIVACY MODE ---
+function updatePrivacyIcon() {
+  DOM.privacyBtn.innerText = state.isPrivacyMode ? "🙈" : "👁️";
+}
 
-if (inputJumlah) {
-  inputJumlah.addEventListener("input", function () {
-    // Regular Expression (Regex) untuk mencari karakter SELAIN angka (0-9) dan minus (-)
-    // /[^0-9-]/g artinya: cari karakter apa saja yang BUKAN 0-9 dan BUKAN -
+DOM.privacyBtn.onclick = () => {
+  state.isPrivacyMode = !state.isPrivacyMode;
+  localStorage.setItem("isPrivacyMode", state.isPrivacyMode);
+  renderApp();
+};
 
-    // Ganti karakter terlarang tersebut dengan string kosong (dihapus)
+// --- PDF EXPORT FEATURE (Refactored) ---
+DOM.btnDownloadPdf.onclick = async () => {
+  const originalText = DOM.btnDownloadPdf.innerHTML;
+  DOM.btnDownloadPdf.innerText = "⏳ Memproses...";
+  DOM.btnDownloadPdf.disabled = true;
+
+  try {
+    if (!window.jspdf) throw new Error("Library PDF belum siap.");
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Font Helper
+    const fetchFont = async (url) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Font error");
+      const buff = await res.arrayBuffer();
+      let binary = "";
+      const bytes = new Uint8Array(buff);
+      for (let i = 0; i < bytes.byteLength; i++)
+        binary += String.fromCharCode(bytes[i]);
+      return window.btoa(binary);
+    };
+
+    // Load Fonts
+    let fontName = "helvetica";
+    try {
+      const reg = await fetchFont(
+        "https://cdn.jsdelivr.net/gh/rsms/inter@4.0/font-files/Inter-Regular.ttf"
+      );
+      const bold = await fetchFont(
+        "https://cdn.jsdelivr.net/gh/rsms/inter@4.0/font-files/Inter-Bold.ttf"
+      );
+      doc.addFileToVFS("Inter-R.ttf", reg);
+      doc.addFileToVFS("Inter-B.ttf", bold);
+      doc.addFont("Inter-R.ttf", "Inter", "normal");
+      doc.addFont("Inter-B.ttf", "Inter", "bold");
+      fontName = "Inter";
+    } catch (e) {
+      console.warn("Pakai font default");
+    }
+
+    const data = getFilteredTransactions();
+    if (data.length === 0) throw new Error("Tidak ada data transaksi.");
+
+    // Calculations
+    const inc = data
+      .filter((t) => t.amount > 0)
+      .reduce((a, t) => a + t.amount, 0);
+    const exp = data
+      .filter((t) => t.amount < 0)
+      .reduce((a, t) => a + Math.abs(t.amount), 0);
+    const total = inc - exp;
+    const fmt = (n) => "Rp" + n.toLocaleString("id-ID");
+    const bulan = DOM.filterMonth.options[DOM.filterMonth.selectedIndex].text;
+
+    // --- PDF DRAWING ---
+    // Header Box
+    doc.setFillColor(18, 18, 18);
+    doc.roundedRect(14, 10, 182, 25, 4, 4, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont(fontName, "bold");
+    doc.text("Dompetku", 20, 26);
+
+    // User Info
+    const uName = auth.currentUser
+      ? auth.currentUser.displayName || "Pengguna"
+      : "Tamu";
+    const uEmail = auth.currentUser ? auth.currentUser.email : "-";
+
+    doc.setFillColor(248, 248, 248);
+    doc.setDrawColor(230, 230, 230);
+    doc.roundedRect(14, 40, 85, 22, 3, 3, "FD");
+
+    doc.setTextColor(40, 40, 40);
+    doc.setFontSize(10);
+    doc.setFont(fontName, "bold");
+    doc.text(uName, 19, 48);
+    doc.setTextColor(120, 120, 120);
+    doc.setFontSize(8);
+    doc.setFont(fontName, "normal");
+    doc.text(uEmail, 19, 55);
+
+    // Summary Right
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.text("Periode:", 196, 45, { align: "right" });
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text(bulan, 196, 50, { align: "right" });
+
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.text("Sisa Saldo:", 196, 56, { align: "right" });
+    doc.setFontSize(12);
+    doc.setTextColor(0, 170, 19);
+    doc.setFont(fontName, "bold");
+    doc.text(fmt(total), 196, 62, { align: "right" });
+
+    // Table
+    const body = data.map((t) => {
+      let dStr = "-";
+      if (t.createdAt) {
+        const d = t.createdAt.seconds
+          ? new Date(t.createdAt.seconds * 1000)
+          : new Date(t.createdAt);
+        dStr =
+          d.toLocaleDateString("id-ID") +
+          "\n" +
+          d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+      }
+      return [
+        dStr,
+        t.text,
+        t.amount < 0 ? "Pengeluaran" : "Pemasukan",
+        fmt(Math.abs(t.amount)),
+      ];
+    });
+
+    doc.autoTable({
+      startY: 70,
+      head: [["Tanggal", "Keterangan", "Tipe", "Nominal"]],
+      body: body,
+      theme: "grid",
+      styles: {
+        font: fontName,
+        fontSize: 9,
+        cellPadding: 5,
+        valign: "middle",
+        lineColor: [230, 230, 230],
+      },
+      headStyles: {
+        fillColor: [240, 255, 240],
+        textColor: [30, 30, 30],
+        fontStyle: "bold",
+      },
+      columnStyles: { 3: { halign: "right", fontStyle: "bold" } },
+      didParseCell: (d) => {
+        if (d.section === "body" && d.column.index === 3) {
+          d.cell.styles.textColor =
+            body[d.row.index][2] === "Pengeluaran"
+              ? [220, 50, 50]
+              : [0, 150, 0];
+        }
+      },
+    });
+
+    // Footer
+    const pCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(180, 180, 180);
+      doc.text("Dicetak dari Dompetku", 14, 285);
+      doc.text("Hal " + i, 195, 285, { align: "right" });
+    }
+
+    doc.save(`Laporan_Dompetku_${bulan}.pdf`);
+  } catch (e) {
+    showIOSAlert("PDF Gagal: " + e.message);
+  } finally {
+    DOM.btnDownloadPdf.innerHTML = originalText;
+    DOM.btnDownloadPdf.disabled = false;
+  }
+};
+
+// --- GENERAL EVENT LISTENERS ---
+DOM.loginBtn.onclick = () => signInWithPopup(auth, provider);
+
+DOM.anonLoginBtn.onclick = () => {
+  signInAnonymously(auth).catch((e) => alert("Gagal tamu: " + e.message));
+};
+
+DOM.logoutBtn.onclick = () => signOut(auth);
+
+DOM.form.addEventListener("submit", addTransaction);
+
+// Input Validation (Numbers Only for Amount)
+if (DOM.amountInput) {
+  DOM.amountInput.addEventListener("input", function () {
     this.value = this.value.replace(/[^0-9-]/g, "");
   });
 }
