@@ -3,6 +3,46 @@ console.log(
   "\x43\x72\x65\x61\x74\x65\x64\x20\x62\x79\x20\x46\x61\x72\x64\x61\x6E\x20\x41\x7A\x7A\x75\x68\x72\x69"
 );
 
+// --- SETUP SOUND EFFECTS ---
+const sfxMasuk = new Audio("./pemasukan1.mp3");
+const sfxKecil = new Audio("./pengeluaran_under100k.mp3"); // 0 - 100rb
+const sfxSedang = new Audio("./pengeluaran_100k-1jt.mp3"); // 100rb - 1jt
+const sfxBesar = new Audio("./pengeluaran_1jt++.mp3"); // > 1jt
+
+// Fungsi Pintar Memilih Suara
+function playTransactionSound(kategori, jumlah) {
+  try {
+    // 1. Logika Pemasukan
+    if (kategori === "Pemasukan") {
+      sfxMasuk.currentTime = 0; // Reset durasi biar bisa di-spam
+      sfxMasuk.play().catch((e) => console.log("Gagal memutar audio:", e));
+      return;
+    }
+
+    // 2. Logika Pengeluaran Berjenjang
+    if (kategori === "Pengeluaran") {
+      let audioToPlay;
+
+      if (jumlah <= 100000) {
+        audioToPlay = sfxKecil;
+      } else if (jumlah > 100000 && jumlah <= 1000000) {
+        audioToPlay = sfxSedang;
+      } else {
+        // Di atas 1 Juta
+        audioToPlay = sfxBesar;
+      }
+
+      // Mainkan suara yang terpilih
+      if (audioToPlay) {
+        audioToPlay.currentTime = 0;
+        audioToPlay.play().catch((e) => console.log("Gagal memutar audio:", e));
+      }
+    }
+  } catch (err) {
+    console.warn("Sound error:", err);
+  }
+}
+
 // --- IMPORTS ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
@@ -191,8 +231,10 @@ async function addTransaction(e) {
     if (amountNum > 0) {
       triggerConfetti();
       triggerHealAnimation();
+      playTransactionSound("Pemasukan", amountNum);
     } else {
       triggerShakeAnimation();
+      playTransactionSound("Pengeluaran", Math.abs(amountNum));
     }
   } catch (error) {
     showIOSAlert("Gagal menyimpan: " + error.message);
@@ -429,10 +471,10 @@ DOM.privacyBtn.onclick = () => {
   renderApp();
 };
 
-// --- PDF EXPORT FEATURE (Refactored) ---
+// --- PDF EXPORT FEATURE ---
 DOM.btnDownloadPdf.onclick = async () => {
   const originalText = DOM.btnDownloadPdf.innerHTML;
-  DOM.btnDownloadPdf.innerText = "⏳ Memproses...";
+  DOM.btnDownloadPdf.innerText = "⏳ Otw lee...";
   DOM.btnDownloadPdf.disabled = true;
 
   try {
@@ -492,7 +534,7 @@ DOM.btnDownloadPdf.onclick = async () => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
     doc.setFont(fontName, "bold");
-    doc.text("Dompetku", 20, 26);
+    doc.text("Dompetku", 105, 22.5, { align: "center", baseline: "middle" });
 
     // User Info
     const uName = auth.currentUser
@@ -583,8 +625,8 @@ DOM.btnDownloadPdf.onclick = async () => {
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(180, 180, 180);
-      doc.text("Dicetak dari Dompetku", 14, 285);
-      doc.text("Hal " + i, 195, 285, { align: "right" });
+      doc.text("Dicetak oleh Dompetku", 14, 285);
+      doc.text("Halaman " + i, 195, 285, { align: "right" });
     }
 
     doc.save(`Laporan_Dompetku_${bulan}.pdf`);

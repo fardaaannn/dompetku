@@ -6,6 +6,10 @@ const ASSETS_TO_CACHE = [
   "./script.js",
   "https://cdn.jsdelivr.net/npm/chart.js",
   "https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0",
+  "./pemasukan1.mp3",
+  "./pengeluaran_under100k.mp3",
+  "./pengeluaran_100k-1jt.mp3",
+  "./pengeluaran_1jt++.mp3",
 ];
 
 // 1. Install Service Worker & Cache Aset Statis
