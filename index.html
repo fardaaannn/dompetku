@@ -27,90 +27,246 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <section id="login-screen" class="center-screen">
-      <h2>Selamat Datang di<br />Dompetku</h2>
-      <p>Catat keuanganmu dengan aman.</p>
-      <button id="login-btn" class="btn google-btn">Login dengan Google</button>
-      <button id="anon-login-btn" class="btn anon-btn">
-        Masuk Tanpa Akun (Tamu)
-      </button>
+    <section id="login-screen" class="login-container">
+      <div class="login-card">
+        <div class="login-icon">💰</div>
+        <h1 class="login-title">Dompetku</h1>
+        <p class="login-subtitle">Catat keuanganmu dengan mudah dan aman</p>
+        <div class="login-buttons">
+          <button id="login-btn" class="btn google-btn">
+            <span>🔐</span> Login dengan Google
+          </button>
+          <button id="anon-login-btn" class="btn anon-btn">
+            <span>👤</span> Masuk Tanpa Akun
+          </button>
+        </div>
+      </div>
     </section>
 
-    <div id="app-screen" class="container hidden">
-      <header class="app-header">
-        <h2>Catatan Keuangan</h2>
-        <div class="header-controls">
-          <button id="privacy-btn" class="btn-small icon-btn">👁️</button>
-          <button id="logout-btn" class="btn-small">Logout</button>
-        </div>
-      </header>
+    <div id="app-screen" class="app-wrapper hidden">
+      <!-- ========== HALAMAN BERANDA ========== -->
+      <div id="page-home" class="page active">
+        <div class="container">
+          <header class="app-header">
+            <h2>Catatan Keuangan</h2>
+            <div class="header-controls">
+              <button id="privacy-btn" class="btn-small icon-btn">👁️</button>
+            </div>
+          </header>
 
-      <div class="rpg-container">
-        <div class="health-bar-container">
-          <div id="health-bar" class="health-bar-fill" style="width: 0%"></div>
-          <span class="hp-text">HP DOMPET</span>
+          <div class="rpg-container">
+            <div class="health-bar-container">
+              <div id="health-bar" class="health-bar-fill" style="width: 0%"></div>
+              <span class="hp-text">HP DOMPET</span>
+            </div>
+          </div>
+
+          <h1 id="balance" class="rpg-balance">Rp 0</h1>
+          <div id="roast-message" class="roast-box">
+            "Dompet masih aman, belum ada drama."
+          </div>
+
+          <div class="inc-exp-container">
+            <div class="inc-exp-item">
+              <span class="inc-exp-icon">💰</span>
+              <div class="inc-exp-info">
+                <h4>Pemasukan</h4>
+                <p id="money-plus" class="money plus">+Rp 0</p>
+              </div>
+            </div>
+            <div class="inc-exp-item">
+              <span class="inc-exp-icon">💸</span>
+              <div class="inc-exp-info">
+                <h4>Pengeluaran</h4>
+                <p id="money-minus" class="money minus">-Rp 0</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-container vertical-filter">
+            <button id="btn-download-pdf" class="btn">
+              <span>📄</span> Download Laporan Keuangan
+            </button>
+            <select id="filter-month" class="full-width-select">
+              <option value="all">Semua Waktu</option>
+            </select>
+          </div>
+
+          <h3>Riwayat Transaksi</h3>
+          <ul id="list" class="list"></ul>
         </div>
       </div>
 
-      <h1 id="balance" class="rpg-balance">Rp 0</h1>
-      <div id="roast-message" class="roast-box">
-        "Dompet masih aman, belum ada drama."
+      <!-- ========== HALAMAN STATISTIK ========== -->
+      <div id="page-stats" class="page">
+        <div class="container">
+          <div class="stats-card">
+            <h3>Grafik Keuangan</h3>
+            <div class="chart-container">
+              <canvas id="expenseChart"></canvas>
+            </div>
+          </div>
+
+          <div class="stats-card">
+            <div class="stats-header">
+              <h3>Ringkasan Bulan Ini</h3>
+              <div class="avg-toggle">
+                <button id="avg-daily" class="avg-toggle-btn active">Harian</button>
+                <button id="avg-weekly" class="avg-toggle-btn">Mingguan</button>
+              </div>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-icon">💰</span>
+                <span class="stat-label">Total Pemasukan</span>
+                <span id="stat-income" class="stat-value plus">Rp 0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">💸</span>
+                <span class="stat-label">Total Pengeluaran</span>
+                <span id="stat-expense" class="stat-value minus">Rp 0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">📊</span>
+                <span id="avg-income-label" class="stat-label">Rata-rata Pemasukan / Hari</span>
+                <span id="stat-avg-income" class="stat-value plus">Rp 0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">📉</span>
+                <span id="avg-expense-label" class="stat-label">Rata-rata Pengeluaran / Hari</span>
+                <span id="stat-avg-expense" class="stat-value minus">Rp 0</span>
+              </div>
+              <div class="stat-item stat-full-width">
+                <span class="stat-icon">📈</span>
+                <span class="stat-label">Transaksi</span>
+                <span id="stat-count" class="stat-value">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ========== HALAMAN TAMBAH TRANSAKSI ========== -->
+      <div id="page-add" class="page">
+        <div class="container">
+          <div class="add-form-card">
+            <form id="form">
+              <!-- Transaction Type Toggle -->
+              <div class="tx-type-toggle">
+                <button type="button" id="type-income" class="tx-type-btn active" data-type="income">
+                  <span>💰</span> Pemasukan
+                </button>
+                <button type="button" id="type-expense" class="tx-type-btn" data-type="expense">
+                  <span>💸</span> Pengeluaran
+                </button>
+              </div>
+
+              <div class="form-control">
+                <label for="text">Keterangan</label>
+                <input
+                  type="text"
+                  id="text"
+                  placeholder="Contoh: Beli kopi, Gajian, dll"
+                />
+              </div>
+
+              <div class="form-control">
+                <label for="amount">Jumlah Uang</label>
+                <input
+                  type="text"
+                  id="amount"
+                  placeholder="Contoh: 50000"
+                />
+              </div>
+
+              <div class="quick-amount-btns">
+                <button type="button" class="quick-btn" data-amount="25000">25rb</button>
+                <button type="button" class="quick-btn" data-amount="50000">50rb</button>
+                <button type="button" class="quick-btn" data-amount="100000">100rb</button>
+                <button type="button" class="quick-btn" data-amount="200000">200rb</button>
+              </div>
+
+              <button type="submit" class="btn submit-btn">
+                <span>✨</span> Simpan Transaksi
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
 
-      <div class="inc-exp-container">
-        <div>
-          <h4>Pemasukan</h4>
-          <p id="money-plus" class="money plus">+Rp 0</p>
-        </div>
-        <div>
-          <h4>Pengeluaran</h4>
-          <p id="money-minus" class="money minus">-Rp 0</p>
+      <!-- ========== HALAMAN PENGATURAN ========== -->
+      <div id="page-settings" class="page">
+        <div class="container">
+          <div class="settings-card">
+            <div class="settings-item">
+              <div class="settings-info">
+                <span class="settings-icon">👤</span>
+                <div>
+                  <span class="settings-label">Akun</span>
+                  <span id="settings-email" class="settings-desc">user@email.com</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-item" id="export-data">
+              <div class="settings-info">
+                <span class="settings-icon">📄</span>
+                <div>
+                  <span class="settings-label">Export Data</span>
+                  <span class="settings-desc">Download laporan PDF</span>
+                </div>
+              </div>
+              <span class="settings-arrow">›</span>
+            </div>
+
+            <div class="settings-item logout-item" id="settings-logout">
+              <div class="settings-info">
+                <span class="settings-icon">🚪</span>
+                <div>
+                  <span class="settings-label">Keluar</span>
+                  <span class="settings-desc">Logout dari akun</span>
+                </div>
+              </div>
+              <span class="settings-arrow">›</span>
+            </div>
+          </div>
+
+          <div class="app-info">
+            <p>Dompetku v2.0</p>
+            <p class="credit">Developed by Fardan Azzuhri</p>
+          </div>
         </div>
       </div>
 
-      <div class="chart-container">
-        <canvas id="expenseChart"></canvas>
-      </div>
-
-      <div class="filter-container vertical-filter">
-        <button id="btn-download-pdf" class="btn">
-          <span>📄</span> Download Laporan Keuangan
-        </button>
-        <select id="filter-month" class="full-width-select">
-          <option value="all">Semua Waktu</option>
-        </select>
-      </div>
-
-      <h3>Riwayat Transaksi</h3>
-      <ul id="list" class="list"></ul>
-
-      <h3>Tambah Transaksi Baru</h3>
-      <form id="form">
-        <div class="form-control">
-          <label for="text">Keterangan</label>
-          <input
-            type="text"
-            id="text"
-            placeholder="Plis masukkan keterangan dulu lee"
-          />
+      <!-- ========== BOTTOM NAVIGATION BAR ========== -->
+      <nav class="bottom-nav">
+        <div class="nav-item active" data-page="home">
+          <div class="nav-circle nav-home">
+            <span class="nav-icon">🏠</span>
+          </div>
+          <span class="nav-label">Beranda</span>
         </div>
 
-        <div class="form-control">
-          <label for="amount">
-            Jumlah Uang <br />
-            <small
-              >(Tambahkan - sebelum nominal angka untuk input
-              pengeluaranmu)</small
-            >
-          </label>
-          <input
-            type="text"
-            id="amount"
-            placeholder="Plis masukkan jumlah uangmu dulu lee"
-          />
+        <div class="nav-item" data-page="stats">
+          <div class="nav-circle nav-stats">
+            <span class="nav-icon">📊</span>
+          </div>
+          <span class="nav-label">Statistik</span>
         </div>
-        <button class="btn">Tambah Transaksi</button>
-      </form>
+
+        <div class="nav-item nav-add-btn" data-page="add">
+          <div class="nav-circle nav-add">
+            <span class="nav-icon">➕</span>
+          </div>
+          <span class="nav-label">Tambah</span>
+        </div>
+
+        <div class="nav-item" data-page="settings">
+          <div class="nav-circle nav-settings">
+            <span class="nav-icon">⚙️</span>
+          </div>
+          <span class="nav-label">Pengaturan</span>
+        </div>
+      </nav>
     </div>
 
     <script type="module" src="script.js"></script>

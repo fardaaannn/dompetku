@@ -122,6 +122,36 @@ const DOM = {
   // RPG
   healthBar: document.getElementById("health-bar"),
   roastMessage: document.getElementById("roast-message"),
+
+  // Navigation
+  bottomNav: document.querySelector(".bottom-nav"),
+  navItems: document.querySelectorAll(".nav-item"),
+  pages: document.querySelectorAll(".page"),
+
+  // Statistics Page
+  statIncome: document.getElementById("stat-income"),
+  statExpense: document.getElementById("stat-expense"),
+  statAvgIncome: document.getElementById("stat-avg-income"),
+  statAvgExpense: document.getElementById("stat-avg-expense"),
+  avgIncomeLabel: document.getElementById("avg-income-label"),
+  avgExpenseLabel: document.getElementById("avg-expense-label"),
+  statCount: document.getElementById("stat-count"),
+  avgDailyBtn: document.getElementById("avg-daily"),
+  avgWeeklyBtn: document.getElementById("avg-weekly"),
+
+  // Settings Page
+  settingsEmail: document.getElementById("settings-email"),
+  privacyToggle: document.getElementById("privacy-toggle"),
+  exportDataBtn: document.getElementById("export-data"),
+  settingsLogout: document.getElementById("settings-logout"),
+
+  // Quick Amount Buttons
+  quickBtns: document.querySelectorAll(".quick-btn"),
+  
+  // Transaction Type Toggle
+  typeIncomeBtn: document.getElementById("type-income"),
+  typeExpenseBtn: document.getElementById("type-expense"),
+  txTypeToggle: document.querySelector(".tx-type-toggle"),
 };
 
 // --- STATE MANAGEMENT ---
@@ -131,6 +161,8 @@ let state = {
   chartInstance: null,
   deleteId: null,
   isPrivacyMode: localStorage.getItem("isPrivacyMode") === "true",
+  avgPeriod: "daily", // "daily" or "weekly"
+  transactionType: "income", // "income" or "expense"
 };
 
 const RPG_CONFIG = {
@@ -208,7 +240,7 @@ function loadTransactions(uid) {
 async function addTransaction(e) {
   e.preventDefault();
   const textVal = DOM.textInput.value.trim();
-  const amountVal = DOM.amountInput.value.trim();
+  const amountVal = DOM.amountInput.value.trim().replace(/[^0-9]/g, ''); // Only digits
 
   if (!textVal || !amountVal) {
     showIOSAlert("Aduhh, isi keterangan dan jumlah uangmu dulu lee");
@@ -216,7 +248,12 @@ async function addTransaction(e) {
   }
 
   try {
-    const amountNum = +amountVal;
+    // Apply sign based on transaction type
+    let amountNum = Math.abs(+amountVal);
+    if (state.transactionType === "expense") {
+      amountNum = -amountNum;
+    }
+    
     await addDoc(collection(db, "transactions"), {
       text: textVal,
       amount: amountNum,
@@ -558,18 +595,39 @@ DOM.btnDownloadPdf.onclick = async () => {
     // Summary Right
     doc.setFontSize(8);
     doc.setTextColor(140, 140, 140);
-    doc.text("Periode:", 196, 45, { align: "right" });
+    doc.text("Periode:", 196, 42, { align: "right" });
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
-    doc.text(bulan, 196, 50, { align: "right" });
+    doc.text(bulan, 196, 47, { align: "right" });
 
+    // Total Income
     doc.setFontSize(8);
     doc.setTextColor(140, 140, 140);
-    doc.text("Sisa Saldo:", 196, 56, { align: "right" });
+    doc.text("Total Pemasukan:", 196, 53, { align: "right" });
+    doc.setFontSize(10);
+    doc.setTextColor(0, 170, 19);
+    doc.setFont(fontName, "bold");
+    doc.text(fmt(inc), 196, 58, { align: "right" });
+
+    // Total Expense
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.setFont(fontName, "normal");
+    doc.text("Total Pengeluaran:", 196, 64, { align: "right" });
+    doc.setFontSize(10);
+    doc.setTextColor(192, 57, 43);
+    doc.setFont(fontName, "bold");
+    doc.text(fmt(exp), 196, 69, { align: "right" });
+
+    // Balance
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.setFont(fontName, "normal");
+    doc.text("Sisa Saldo:", 196, 75, { align: "right" });
     doc.setFontSize(12);
     doc.setTextColor(0, 170, 19);
     doc.setFont(fontName, "bold");
-    doc.text(fmt(total), 196, 62, { align: "right" });
+    doc.text(fmt(total), 196, 80, { align: "right" });
 
     // Table
     const body = data.map((t) => {
@@ -645,13 +703,295 @@ DOM.anonLoginBtn.onclick = () => {
   signInAnonymously(auth).catch((e) => alert("Gagal tamu: " + e.message));
 };
 
-DOM.logoutBtn.onclick = () => signOut(auth);
+// Logout button removed from Beranda, now only in Settings page
+if (DOM.logoutBtn) {
+  DOM.logoutBtn.onclick = () => signOut(auth);
+}
 
 DOM.form.addEventListener("submit", addTransaction);
 
 // Input Validation (Numbers Only for Amount)
 if (DOM.amountInput) {
   DOM.amountInput.addEventListener("input", function () {
-    this.value = this.value.replace(/[^0-9-]/g, "");
+    this.value = this.value.replace(/[^0-9]/g, ""); // Allow only numbers, no minus sign
   });
+}
+
+// ============================================
+// TRANSACTION TYPE TOGGLE
+// ============================================
+
+function setTransactionType(type) {
+  state.transactionType = type;
+  
+  // Update visually
+  if (DOM.typeIncomeBtn && DOM.typeExpenseBtn && DOM.txTypeToggle) {
+    DOM.typeIncomeBtn.classList.remove("active");
+    DOM.typeExpenseBtn.classList.remove("active");
+    
+    if (type === "income") {
+      DOM.typeIncomeBtn.classList.add("active");
+      DOM.txTypeToggle.classList.remove("expense");
+      DOM.txTypeToggle.classList.add("income");
+    } else {
+      DOM.typeExpenseBtn.classList.add("active");
+      DOM.txTypeToggle.classList.remove("income");
+      DOM.txTypeToggle.classList.add("expense");
+    }
+  }
+}
+
+// Event Listeners for Type Toggle
+if (DOM.typeIncomeBtn) {
+  DOM.typeIncomeBtn.addEventListener("click", () => setTransactionType("income"));
+}
+if (DOM.typeExpenseBtn) {
+  DOM.typeExpenseBtn.addEventListener("click", () => setTransactionType("expense"));
+}
+
+// Initialize toggle state
+setTransactionType("income");
+
+// Quick Amount Buttons Logic
+if (DOM.quickBtns) {
+  DOM.quickBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const amount = btn.getAttribute("data-amount");
+      if (DOM.amountInput) {
+        DOM.amountInput.value = amount;
+      }
+    });
+  });
+}
+
+// ============================================
+// NAVIGATION SYSTEM
+// ============================================
+
+function navigateToPage(pageName) {
+  // Remove active from all nav items and pages
+  DOM.navItems.forEach(item => item.classList.remove("active"));
+  DOM.pages.forEach(page => page.classList.remove("active"));
+
+  // Find and activate the target nav item
+  const targetNavItem = document.querySelector(`.nav-item[data-page="${pageName}"]`);
+  if (targetNavItem) {
+    targetNavItem.classList.add("active");
+    
+    // Trigger ripple effect
+    const ripple = targetNavItem.querySelector(".nav-ripple");
+    if (ripple) {
+      ripple.classList.remove("animate");
+      void ripple.offsetWidth; // Force reflow
+      ripple.classList.add("animate");
+      setTimeout(() => ripple.classList.remove("animate"), 600);
+    }
+  }
+
+  // Find and activate the target page
+  const targetPage = document.getElementById(`page-${pageName}`);
+  if (targetPage) {
+    targetPage.classList.add("active");
+  }
+
+  // Update statistics when navigating to stats page
+  if (pageName === "stats") {
+    updateStatistics();
+  }
+
+  // Update settings when navigating to settings page
+  if (pageName === "settings") {
+    updateSettingsPage();
+  }
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// Nav item click handlers - Initialize after checking elements exist
+function initNavigation() {
+  const navItems = document.querySelectorAll(".nav-item");
+  const pages = document.querySelectorAll(".page");
+  
+  console.log("Initializing navigation, found", navItems.length, "nav items");
+  
+  navItems.forEach(item => {
+    item.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const pageName = item.dataset.page;
+      console.log("Nav clicked:", pageName);
+      
+      // Remove active from all
+      navItems.forEach(i => i.classList.remove("active"));
+      pages.forEach(p => p.classList.remove("active"));
+      
+      // Add active to clicked item
+      item.classList.add("active");
+      
+      // Show target page
+      const targetPage = document.getElementById(`page-${pageName}`);
+      if (targetPage) {
+        targetPage.classList.add("active");
+      }
+      
+      // Update pages when needed
+      if (pageName === "stats") {
+        updateStatistics();
+      }
+      if (pageName === "settings") {
+        updateSettingsPage();
+      }
+      
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+}
+
+// Initialize navigation
+initNavigation();
+
+// ============================================
+// STATISTICS PAGE FUNCTIONS
+// ============================================
+
+function updateStatistics() {
+  const filtered = getFilteredTransactions();
+  const amounts = filtered.map(t => t.amount);
+  
+  const income = amounts.filter(a => a > 0).reduce((acc, a) => acc + a, 0);
+  const expense = amounts.filter(a => a < 0).reduce((acc, a) => acc + Math.abs(a), 0);
+  const count = filtered.length;
+  
+  // Calculate averages based on period (daily = 30 days, weekly = 4 weeks)
+  const divisor = state.avgPeriod === "daily" ? 30 : 4;
+  const avgIncome = income / divisor;
+  const avgExpense = expense / divisor;
+  
+  // Update labels based on period
+  const periodLabel = state.avgPeriod === "daily" ? "/ Hari" : "/ Minggu";
+  if (DOM.avgIncomeLabel) {
+    DOM.avgIncomeLabel.textContent = `Rata-rata Pemasukan ${periodLabel}`;
+  }
+  if (DOM.avgExpenseLabel) {
+    DOM.avgExpenseLabel.textContent = `Rata-rata Pengeluaran ${periodLabel}`;
+  }
+
+  if (DOM.statIncome) {
+    DOM.statIncome.textContent = state.isPrivacyMode ? "Rp ••••••" : formatRupiah(income);
+  }
+  if (DOM.statExpense) {
+    DOM.statExpense.textContent = state.isPrivacyMode ? "Rp ••••••" : formatRupiah(expense);
+  }
+  if (DOM.statAvgIncome) {
+    DOM.statAvgIncome.textContent = state.isPrivacyMode ? "Rp ••••••" : formatRupiah(Math.round(avgIncome));
+  }
+  if (DOM.statAvgExpense) {
+    DOM.statAvgExpense.textContent = state.isPrivacyMode ? "Rp ••••••" : formatRupiah(Math.round(avgExpense));
+  }
+  if (DOM.statCount) {
+    DOM.statCount.textContent = count;
+  }
+}
+
+// Toggle average period (daily/weekly)
+function setAvgPeriod(period) {
+  state.avgPeriod = period;
+  
+  // Update button states
+  if (DOM.avgDailyBtn) {
+    DOM.avgDailyBtn.classList.toggle("active", period === "daily");
+  }
+  if (DOM.avgWeeklyBtn) {
+    DOM.avgWeeklyBtn.classList.toggle("active", period === "weekly");
+  }
+  
+  // Update toggle container class for sliding animation
+  const toggleContainer = document.querySelector(".avg-toggle");
+  if (toggleContainer) {
+    toggleContainer.classList.toggle("weekly", period === "weekly");
+  }
+  
+  // Recalculate statistics
+  updateStatistics();
+}
+
+// Event listeners for toggle buttons
+if (DOM.avgDailyBtn) {
+  DOM.avgDailyBtn.addEventListener("click", () => setAvgPeriod("daily"));
+}
+if (DOM.avgWeeklyBtn) {
+  DOM.avgWeeklyBtn.addEventListener("click", () => setAvgPeriod("weekly"));
+}
+
+// ============================================
+// SETTINGS PAGE FUNCTIONS
+// ============================================
+
+function updateSettingsPage() {
+  // Update email display
+  if (DOM.settingsEmail && auth.currentUser) {
+    const email = auth.currentUser.email || "Mode Tamu (Anonymous)";
+    DOM.settingsEmail.textContent = email;
+  }
+
+  // Sync privacy toggle state
+  if (DOM.privacyToggle) {
+    DOM.privacyToggle.checked = state.isPrivacyMode;
+  }
+}
+
+// Privacy toggle in settings
+if (DOM.privacyToggle) {
+  DOM.privacyToggle.addEventListener("change", function() {
+    state.isPrivacyMode = this.checked;
+    localStorage.setItem("isPrivacyMode", state.isPrivacyMode);
+    renderApp();
+    updateStatistics();
+  });
+}
+
+// Export data button in settings
+if (DOM.exportDataBtn) {
+  DOM.exportDataBtn.addEventListener("click", () => {
+    DOM.btnDownloadPdf.click();
+  });
+}
+
+// Logout from settings
+if (DOM.settingsLogout) {
+  DOM.settingsLogout.addEventListener("click", () => {
+    signOut(auth);
+  });
+}
+
+// ============================================
+// QUICK AMOUNT BUTTONS
+// ============================================
+
+DOM.quickBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const amount = btn.dataset.amount;
+    if (DOM.amountInput) {
+      DOM.amountInput.value = amount;
+      DOM.amountInput.focus();
+    }
+  });
+});
+
+// ============================================
+// SYNC PRIVACY BUTTON WITH SETTINGS TOGGLE
+// ============================================
+
+// Override the original privacy button to sync with settings toggle
+if (DOM.privacyBtn) {
+  DOM.privacyBtn.onclick = () => {
+    state.isPrivacyMode = !state.isPrivacyMode;
+    localStorage.setItem("isPrivacyMode", state.isPrivacyMode);
+    if (DOM.privacyToggle) {
+      DOM.privacyToggle.checked = state.isPrivacyMode;
+    }
+    renderApp();
+  };
 }
