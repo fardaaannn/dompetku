@@ -1,0 +1,1659 @@
+/* --- Style by Fardan Azzuhri --- */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+:root {
+  --bg-color: #121212;
+  --text-color: #e0e0e0;
+  --card-bg: #1e1e1e;
+  --border-color: #333;
+  --accent-color: #9c88ff;
+  --accent-hover: #8e78ff;
+  --success-color: #2ecc71;
+  --danger-color: #c0392b; /* Untuk teks */
+  --danger-bg: #ff453a; /* Untuk tombol */
+  --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --font-main: "Inter", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-main);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- LAYOUT UTILITIES --- */
+.container {
+  margin: 30px auto;
+  width: 350px;
+}
+
+/* --- LOGIN SCREEN --- */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: var(--bg-color);
+}
+
+.login-card {
+  text-align: center;
+  max-width: 300px;
+  width: 100%;
+  padding: 20px;
+}
+
+.login-icon {
+  font-size: 72px;
+  margin-bottom: 20px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.login-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  color: #fff;
+}
+
+.login-subtitle {
+  color: #888;
+  font-size: 14px;
+  margin: 0 0 35px 0;
+  line-height: 1.5;
+}
+
+.login-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-buttons .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 20px;
+  font-size: 15px;
+  border-radius: 10px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* --- TYPOGRAPHY --- */
+h1 {
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+h3 {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+  margin: 40px 0 10px;
+}
+
+h4 {
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/* --- HEADER & CONTROLS --- */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-small {
+  background-color: var(--border-color);
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-small:hover {
+  background-color: #555;
+}
+
+.icon-btn {
+  font-size: 16px;
+}
+
+/* --- KOTAK SALDO (INC-EXP) --- */
+.inc-exp-container {
+  background-color: var(--card-bg);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  margin: 20px 0;
+  gap: 15px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.inc-exp-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.inc-exp-item:first-child {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 20px;
+}
+
+.inc-exp-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.inc-exp-icon {
+  font-size: 32px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.inc-exp-info {
+  flex: 1;
+  text-align: left;
+}
+
+.inc-exp-info h4 {
+  margin: 0 0 5px 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 0.5px;
+}
+
+.money {
+  font-size: 28px;
+  letter-spacing: 1px;
+  margin: 10px 0;
+  font-weight: 700;
+  text-align: center;
+  display: block;
+  text-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+}
+
+.money.plus {
+  color: var(--success-color);
+}
+.money.minus {
+  color: var(--danger-color);
+}
+
+/* --- FILTER & BUTTONS --- */
+.filter-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vertical-filter {
+  flex-direction: column;
+}
+
+.btn-full-icon {
+  width: 100%;
+  justify-content: center;
+  background-color: var(--accent-color);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.full-width-select {
+  width: 100%;
+}
+
+/* Dropdown & Inputs Dark Mode */
+input[type="text"],
+input[type="number"],
+select {
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  display: block;
+  font-size: 16px;
+  padding: 10px;
+  width: 100%;
+  background-color: var(--card-bg);
+  color: #fff;
+  color-scheme: dark; /* Penting untuk panah dropdown */
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #555;
+}
+
+select option {
+  background-color: var(--card-bg);
+}
+
+/* --- FORMS & BUTTONS --- */
+label {
+  display: inline-block;
+  margin: 10px 0;
+}
+
+.btn {
+  cursor: pointer;
+  background-color: var(--accent-color);
+  box-shadow: var(--box-shadow);
+  color: #fff;
+  border: 0;
+  display: block;
+  font-size: 16px;
+  margin: 10px 0 30px;
+  padding: 10px;
+  width: 100%;
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+.btn:hover {
+  background-color: var(--accent-hover);
+}
+.google-btn {
+  background: linear-gradient(135deg, #9c88ff, #8e78ff);
+  margin-top: 0;
+  box-shadow: 
+    0 0 15px rgba(156, 136, 255, 0.5),
+    0 4px 15px rgba(156, 136, 255, 0.3);
+  border: 1px solid rgba(156, 136, 255, 0.5);
+}
+.google-btn:hover {
+  background: linear-gradient(135deg, #8e78ff, #7c5ce7);
+}
+.anon-btn {
+  background: linear-gradient(135deg, #555, #444);
+  margin-top: 0;
+  box-shadow: 
+    0 0 15px rgba(85, 85, 85, 0.4),
+    0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.anon-btn:hover {
+  background: linear-gradient(135deg, #666, #555);
+}
+
+/* Glowing Effect (Static) */
+#btn-download-pdf,
+#form .btn {
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: box-shadow 0.3s ease, transform 0.2s;
+}
+
+#btn-download-pdf:active,
+#form .btn:active {
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.9);
+  transform: scale(0.98);
+}
+
+/* --- RIWAYAT TRANSAKSI (LIST) --- */
+.list {
+  list-style-type: none;
+  padding: 0;
+  margin-bottom: 40px;
+}
+
+.list li {
+  color: #fff;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  margin: 12px 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+/* Pemasukan - Green background */
+.list li.plus {
+  background: linear-gradient(135deg, rgba(46, 204, 113, 0.15), rgba(46, 204, 113, 0.05));
+  border: 1px solid rgba(46, 204, 113, 0.2);
+  border-left: 4px solid var(--success-color);
+}
+
+/* Pengeluaran - Red background */
+.list li.minus {
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(231, 76, 60, 0.05));
+  border: 1px solid rgba(231, 76, 60, 0.2);
+  border-left: 4px solid var(--danger-color);
+}
+
+.li-content {
+  padding: 15px;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+/* List Item Details */
+.tx-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tx-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #fff;
+  flex: 1;
+  min-width: 0;
+  padding-right: 10px;
+}
+
+.tx-amount {
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  text-align: right;
+  min-width: 100px;
+}
+
+.list li.plus .tx-amount {
+  color: var(--success-color);
+}
+.list li.minus .tx-amount {
+  color: var(--danger-color);
+}
+
+.tx-date {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* Transaction Actions (Edit/Delete Buttons) */
+.tx-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+
+.tx-edit-btn,
+.tx-delete-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tx-edit-btn:hover {
+  background: rgba(156, 136, 255, 0.2);
+  border-color: rgba(156, 136, 255, 0.3);
+}
+
+.tx-delete-btn:hover {
+  background: rgba(231, 76, 60, 0.2);
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+/* Delete Button Slide */
+.delete-btn {
+  cursor: pointer;
+  background-color: var(--danger-bg);
+  border: 0;
+  color: #fff;
+  font-size: 18px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 60px;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+}
+
+.trash-icon {
+  pointer-events: none;
+}
+
+/* Slide Interaction */
+.list li:hover .li-content,
+.list li.active-mobile .li-content {
+  transform: translateX(-60px);
+}
+
+.list li:hover .delete-btn,
+.list li.active-mobile .delete-btn {
+  transform: translateX(0);
+}
+
+/* --- CHART --- */
+.chart-container {
+  position: relative;
+  height: 250px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+/* --- RPG MODE FEATURES --- */
+.rpg-container {
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.health-bar-container {
+  width: 100%;
+  height: 35px;
+  background: linear-gradient(180deg, #1a1a1a, #2d2d2d);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    inset 0 3px 8px rgba(0, 0, 0, 0.6),
+    0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Shimmer animation on entire health bar container */
+.health-bar-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -30%;
+  width: 30%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+  animation: shimmerBounce 3s ease-in-out infinite;
+  z-index: 3;
+  border-radius: 20px;
+}
+
+@keyframes shimmerBounce {
+  0% { left: -30%; }
+  50% { left: 100%; }
+  100% { left: -30%; }
+}
+
+.health-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #e74c3c, #f1c40f, #2ecc71);
+  width: 50%;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  border-radius: 18px;
+}
+
+.hp-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+  z-index: 2;
+  letter-spacing: 2px;
+}
+
+/* RPG Balance - Below HP Bar */
+.rpg-balance {
+  text-align: center;
+  font-size: 32px;
+  font-weight: 800;
+  margin: 15px 0;
+  color: #2ecc71;
+  text-shadow: 
+    0 0 10px rgba(46, 204, 113, 0.6),
+    0 0 20px rgba(46, 204, 113, 0.4),
+    0 0 40px rgba(46, 204, 113, 0.2);
+  letter-spacing: 1px;
+}
+
+.roast-box {
+  background: rgba(30, 30, 30, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #e0e0e0;
+  padding: 15px 20px;
+  border-radius: 12px;
+  text-align: center;
+  font-style: italic;
+  font-size: 14px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(156, 136, 255, 0.3);
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    0 0 15px rgba(156, 136, 255, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+/* --- MODAL IPHONE STYLE --- */
+.ios-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-out;
+  cursor: pointer;
+}
+
+.ios-modal {
+  background-color: rgba(30, 30, 30, 0.9);
+  width: 270px;
+  border-radius: 14px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  animation: scaleUp 0.2s ease-out;
+}
+
+.ios-modal-text {
+  padding: 24px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.ios-modal h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 22px;
+  color: #fff;
+  border: none;
+  padding: 0;
+}
+
+.ios-modal p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: #ccc;
+  text-align: center;
+  max-width: 240px;
+}
+
+.ios-modal-actions {
+  display: flex;
+  border-top: 1px solid #3a3a3a;
+}
+
+.ios-modal-actions button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 12px 0;
+  font-size: 17px;
+  cursor: pointer;
+  color: #0a84ff; /* iOS Blue */
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
+  width: auto;
+  transition: background-color 0.2s;
+}
+
+.ios-modal-actions button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.ios-modal-actions button:first-child {
+  border-right: 1px solid #3a3a3a;
+  font-weight: 400;
+}
+
+.ios-modal-actions button.text-danger {
+  color: #ff453a; /* iOS Red */
+  font-weight: 400;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shake {
+  0% {
+    transform: translate(1px, 1px) rotate(0deg);
+  }
+  10% {
+    transform: translate(-1px, -2px) rotate(-1deg);
+  }
+  20% {
+    transform: translate(-3px, 0px) rotate(1deg);
+  }
+  30% {
+    transform: translate(3px, 2px) rotate(0deg);
+  }
+  40% {
+    transform: translate(1px, -1px) rotate(1deg);
+  }
+  50% {
+    transform: translate(-1px, 2px) rotate(-1deg);
+  }
+  60% {
+    transform: translate(-3px, 1px) rotate(0deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0);
+  }
+}
+
+.shake-animation {
+  animation: shake 0.5s;
+  color: var(--danger-color) !important;
+}
+
+@keyframes heal {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(46, 204, 113, 0);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(46, 204, 113, 0);
+  }
+}
+
+.heal-animation {
+  animation: heal 0.5s;
+}
+
+/* --- MEDIA QUERIES --- */
+@media (min-width: 400px) {
+  .tx-details {
+    display: grid;
+    grid-template-areas:
+      "name amount"
+      "date amount";
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+  .tx-name {
+    grid-area: name;
+  }
+  .tx-date {
+    grid-area: date;
+  }
+  .tx-amount {
+    grid-area: amount;
+    text-align: right;
+    font-size: 16px;
+  }
+}
+
+/* --- UPDATE TOMBOL DOWNLOAD --- */
+/* Memastikan tombol download menggunakan flexbox agar ikon dan teks rapi di tengah */
+#btn-download-pdf {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px; /* Jarak antara ikon kertas dan teks */
+  margin-top: 0;
+  margin-bottom: 15px; /* Jarak ke elemen bawahnya */
+}
+
+/* Memastikan efek glow tetap jalan (jika belum tercakup di kode sebelumnya) */
+#btn-download-pdf:active {
+  transform: scale(0.98);
+}
+
+/* ============================================
+   BOTTOM NAVIGATION BAR - GLASSMORPHISM STYLE
+   ============================================ */
+
+/* App Wrapper untuk menampung halaman dan navbar */
+.app-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  padding-bottom: 90px; /* Ruang untuk navbar */
+  position: relative;
+}
+
+/* Page System */
+.page {
+  display: none;
+  animation: pageSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page.active {
+  display: block;
+}
+
+@keyframes pageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Bottom Navigation - Glassmorphism */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 10px;
+  z-index: 1000;
+  
+  /* Glassmorphism Effect */
+  background: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Nav Items */
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 8px 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Universal Circle Button Style */
+.nav-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nav-icon {
+  font-size: 22px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Make the + icon in add button white */
+.nav-add .nav-icon {
+  filter: brightness(0) invert(1);
+}
+
+.nav-label {
+  font-size: 10px;
+  margin-top: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  letter-spacing: 0.3px;
+}
+
+/* ============================================
+   UNIFIED BUTTON STYLE - ACCENT COLOR (PURPLE)
+   ============================================ */
+
+/* All Nav Circles - Same Purple Color */
+.nav-circle {
+  background: linear-gradient(135deg, #9c88ff 0%, #8e78ff 50%, #7c5ce7 100%);
+  box-shadow: 
+    0 4px 15px rgba(156, 136, 255, 0.3),
+    0 6px 20px rgba(156, 136, 255, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* All Labels - Same Color */
+.nav-label {
+  color: #9c88ff;
+}
+
+/* Add Button - Same size as others, proper alignment */
+.nav-add-btn {
+  margin-top: 0;
+  /* Ensure same vertical alignment as siblings */
+}
+
+.nav-add-btn .nav-circle {
+  width: 48px;
+  height: 48px;
+}
+
+/* ============================================
+   HOVER EFFECT - Scale & Glow
+   ============================================ */
+.nav-item:hover .nav-circle {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 
+    0 6px 25px rgba(156, 136, 255, 0.5),
+    0 10px 35px rgba(156, 136, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.nav-item:hover .nav-icon {
+  transform: scale(1.1);
+}
+
+.nav-item:hover .nav-label {
+  color: #b8a5ff;
+}
+
+/* ============================================
+   CLICK/TAP EFFECT - Scale Down
+   ============================================ */
+.nav-item:active .nav-circle {
+  transform: scale(0.92);
+  box-shadow: 
+    0 2px 10px rgba(156, 136, 255, 0.4),
+    0 4px 15px rgba(156, 136, 255, 0.2);
+}
+
+/* ============================================
+   ACTIVE STATE - Highlighted, Raised & Glowing
+   ============================================ */
+.nav-item.active .nav-circle {
+  transform: translateY(-5px) scale(1.1);
+  background: linear-gradient(135deg, #b8a5ff 0%, #9c88ff 50%, #8e78ff 100%);
+  box-shadow: 
+    0 8px 30px rgba(156, 136, 255, 0.6),
+    0 15px 45px rgba(156, 136, 255, 0.35),
+    0 0 20px rgba(156, 136, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.nav-item.active .nav-icon {
+  transform: scale(1.15);
+}
+
+.nav-item.active .nav-label {
+  color: #ffffff;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(156, 136, 255, 0.5);
+}
+
+/* ============================================
+   STATISTICS PAGE STYLES
+   ============================================ */
+.stats-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stats-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 15px;
+  gap: 10px;
+}
+
+.stats-card h3 {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: 16px;
+  color: #fff;
+}
+
+.avg-toggle {
+  display: flex;
+  gap: 0;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px;
+  border-radius: 10px;
+  position: relative;
+}
+
+.avg-toggle-btn {
+  padding: 8px 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+  color: #888;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.avg-toggle-btn:hover {
+  color: #ccc;
+}
+
+.avg-toggle-btn.active {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Sliding indicator background */
+.avg-toggle::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  background: linear-gradient(135deg, #9c88ff, #8e78ff);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(156, 136, 255, 0.4);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 0;
+}
+
+.avg-toggle.weekly::before {
+  transform: translateX(100%);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.stat-item {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Full width stat item (spans 2 columns) */
+.stat-full-width {
+  grid-column: span 2;
+}
+
+.stat-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.stat-value.plus {
+  color: var(--success-color);
+}
+
+.stat-value.minus {
+  color: var(--danger-color);
+}
+
+/* ============================================
+   ADD TRANSACTION PAGE STYLES
+   ============================================ */
+.add-form-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 25px;
+  margin-top: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.quick-amount-btns {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.quick-btn {
+  flex: 1;
+  min-width: 60px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(156, 136, 255, 0.15);
+  color: #9c88ff;
+  border: 1px solid rgba(156, 136, 255, 0.3);
+}
+
+.quick-btn:hover {
+  background: rgba(156, 136, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.quick-btn:active {
+  transform: scale(0.95);
+}
+
+/* Transaction Type Toggle */
+.tx-type-toggle {
+  display: flex;
+  gap: 0;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.tx-type-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: transparent;
+  color: #888;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.tx-type-btn:hover {
+  color: #ccc;
+}
+
+.tx-type-btn.active {
+  color: #fff;
+}
+
+/* Sliding indicator */
+.tx-type-toggle::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  border-radius: 10px;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 0;
+}
+
+/* Income active - Green */
+.tx-type-toggle.income::before {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  box-shadow: 0 2px 15px rgba(46, 204, 113, 0.4);
+  transform: translateX(0);
+}
+
+/* Expense active - Red */
+.tx-type-toggle.expense::before {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  box-shadow: 0 2px 15px rgba(231, 76, 60, 0.4);
+  transform: translateX(100%);
+}
+
+.submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #9c88ff, #8e78ff);
+  box-shadow: 0 4px 15px rgba(156, 136, 255, 0.3);
+}
+
+.submit-btn:hover {
+  background: linear-gradient(135deg, #8e78ff, #7c5ce7);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(156, 136, 255, 0.4);
+}
+
+.submit-btn:active {
+  transform: scale(0.98);
+}
+
+/* Wallet Selector in Form */
+.wallet-select {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.wallet-select:hover {
+  border-color: rgba(156, 136, 255, 0.5);
+}
+
+.wallet-select:focus {
+  outline: none;
+  border-color: #9c88ff;
+  box-shadow: 0 0 0 3px rgba(156, 136, 255, 0.2);
+}
+
+.wallet-select option {
+  background: #1a1a1a;
+  color: #fff;
+  padding: 10px;
+}
+
+/* ============================================
+   SETTINGS PAGE STYLES
+   ============================================ */
+.settings-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-top: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-item:last-child {
+  border-bottom: none;
+}
+
+.settings-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.settings-item:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.settings-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.settings-icon {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.settings-label {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.settings-desc {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.settings-arrow {
+  font-size: 24px;
+  color: #555;
+  font-weight: 300;
+}
+
+.logout-item .settings-label {
+  color: #e74c3c;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  width: 50px;
+  height: 28px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch label {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #333;
+  transition: 0.3s;
+  border-radius: 28px;
+}
+
+.toggle-switch label::before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch input:checked + label {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+
+.toggle-switch input:checked + label::before {
+  transform: translateX(22px);
+}
+
+/* App Info Footer */
+.app-info {
+  text-align: center;
+  padding: 30px 20px;
+  color: #555;
+}
+
+.app-info p {
+  margin: 5px 0;
+  font-size: 13px;
+}
+
+.app-info .credit {
+  font-size: 11px;
+  color: #444;
+}
+
+/* ============================================
+   WALLET PAGE STYLES
+   ============================================ */
+
+/* Total Balance Card */
+.total-balance-card {
+  background: linear-gradient(135deg, #9c88ff, #7c5ce7);
+  border-radius: 20px;
+  padding: 30px 25px;
+  text-align: center;
+  margin-bottom: 25px;
+  box-shadow: 
+    0 10px 40px rgba(156, 136, 255, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.total-balance-label {
+  display: block;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.total-balance-amount {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Wallet Section */
+.wallet-section {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.wallet-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.wallet-section-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #fff;
+  border: none;
+  padding: 0;
+}
+
+.btn-add-wallet {
+  background: rgba(156, 136, 255, 0.15);
+  color: #9c88ff;
+  border: 1px solid rgba(156, 136, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-add-wallet:hover {
+  background: rgba(156, 136, 255, 0.25);
+}
+
+/* Wallet List */
+.wallet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wallet-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wallet-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.wallet-icon {
+  font-size: 28px;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.wallet-info {
+  flex: 1;
+}
+
+.wallet-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 3px;
+}
+
+.wallet-balance {
+  font-size: 14px;
+  color: #2ecc71;
+  font-weight: 500;
+}
+
+.wallet-balance.negative {
+  color: #e74c3c;
+}
+
+/* Wallet Empty State */
+.wallet-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.wallet-empty-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+
+.wallet-empty-state p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Wallet Modal Specific */
+.wallet-modal {
+  width: 320px;
+}
+
+.wallet-form {
+  width: 100%;
+  text-align: left;
+}
+
+.wallet-form .form-control {
+  margin-bottom: 15px;
+}
+
+.wallet-form label {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wallet-form input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Icon Picker */
+.wallet-icon-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wallet-icon-option {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.wallet-icon-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.wallet-icon-option.selected {
+  border-color: #9c88ff;
+  background: rgba(156, 136, 255, 0.2);
+}
+
+/* Wallet Modal Actions */
+.wallet-modal-actions {
+  flex-direction: row !important;
+  gap: 10px;
+  padding: 15px 20px 20px;
+  border-top: none !important;
+}
+
+.wallet-modal-actions button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px !important;
+  font-size: 14px;
+}
+
+.wallet-save-btn {
+  background: linear-gradient(135deg, #9c88ff, #8e78ff) !important;
+  color: #fff !important;
+  border: none !important;
+  font-weight: 600;
+}
+
+.wallet-save-btn:hover {
+  box-shadow: 0 4px 15px rgba(156, 136, 255, 0.3);
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+@media (max-width: 380px) {
+  .nav-label {
+    font-size: 9px;
+  }
+  
+  .nav-add-circle {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .nav-add-btn {
+    margin-top: -25px;
+  }
+}
+
+@media (min-width: 500px) {
+  .bottom-nav {
+    max-width: 500px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 20px 20px 0 0;
+  }
+}

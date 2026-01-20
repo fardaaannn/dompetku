@@ -1,0 +1,1270 @@
+// --- Security Signature (Do not remove) ---
+console.log(
+  "\x43\x72\x65\x61\x74\x65\x64\x20\x62\x79\x20\x46\x61\x72\x64\x61\x6E\x20\x41\x7A\x7A\x75\x68\x72\x69"
+);
+
+// --- SETUP SOUND EFFECTS ---
+const sfxMasuk = new Audio("./pemasukan1.mp3");
+const sfxKecil = new Audio("./pengeluaran_under100k.mp3"); // 0 - 100rb
+const sfxSedang = new Audio("./pengeluaran_100k-1jt.mp3"); // 100rb - 1jt
+const sfxBesar = new Audio("./pengeluaran_1jt++.mp3"); // > 1jt
+
+// Fungsi Pintar Memilih Suara
+function playTransactionSound(kategori, jumlah) {
+  try {
+    // 1. Logika Pemasukan
+    if (kategori === "Pemasukan") {
+      sfxMasuk.currentTime = 0; // Reset durasi biar bisa di-spam
+      sfxMasuk.play().catch((e) => console.log("Gagal memutar audio:", e));
+      return;
+    }
+
+    // 2. Logika Pengeluaran Berjenjang
+    if (kategori === "Pengeluaran") {
+      let audioToPlay;
+
+      if (jumlah <= 100000) {
+        audioToPlay = sfxKecil;
+      } else if (jumlah > 100000 && jumlah <= 1000000) {
+        audioToPlay = sfxSedang;
+      } else {
+        // Di atas 1 Juta
+        audioToPlay = sfxBesar;
+      }
+
+      // Mainkan suara yang terpilih
+      if (audioToPlay) {
+        audioToPlay.currentTime = 0;
+        audioToPlay.play().catch((e) => console.log("Gagal memutar audio:", e));
+      }
+    }
+  } catch (err) {
+    console.warn("Sound error:", err);
+  }
+}
+
+// --- IMPORTS ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
+  serverTimestamp,
+  where,
+  enableIndexedDbPersistence,
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  signInAnonymously,
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+// --- FIREBASE CONFIG ---
+const firebaseConfig = {
+  apiKey: "AIzaSyCFPnr_wwe8a3KsWQFyf9Y_hjj81WzOHtU",
+  authDomain: "dompet-ku-web.firebaseapp.com",
+  projectId: "dompet-ku-web",
+  storageBucket: "dompet-ku-web.firebasestorage.app",
+  messagingSenderId: "387540289390",
+  appId: "1:387540289390:web:529808a041c73242f3637f",
+  measurementId: "G-GEJTCBX0DX",
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// Enable Offline Persistence
+enableIndexedDbPersistence(db).catch((err) => {
+  console.log("Persistence warning:", err.code);
+});
+
+// --- DOM ELEMENTS (Centralized) ---
+const DOM = {
+  loginScreen: document.getElementById("login-screen"),
+  appScreen: document.getElementById("app-screen"),
+  loginBtn: document.getElementById("login-btn"),
+  anonLoginBtn: document.getElementById("anon-login-btn"),
+  logoutBtn: document.getElementById("logout-btn"),
+
+  privacyBtn: document.getElementById("privacy-btn"),
+  balance: document.getElementById("balance"),
+  moneyPlus: document.getElementById("money-plus"),
+  moneyMinus: document.getElementById("money-minus"),
+
+  list: document.getElementById("list"),
+  form: document.getElementById("form"),
+  textInput: document.getElementById("text"),
+  amountInput: document.getElementById("amount"),
+  filterMonth: document.getElementById("filter-month"),
+
+  chartCtx: document.getElementById("expenseChart"),
+  btnDownloadPdf: document.getElementById("btn-download-pdf"),
+
+  // Modals
+  alertModal: document.getElementById("ios-alert-modal"),
+  alertMessage: document.getElementById("alert-message"),
+  alertOkBtn: document.getElementById("alert-ok-btn"),
+  deleteModal: document.getElementById("ios-modal"),
+  modalCancel: document.getElementById("modal-cancel"),
+  modalConfirm: document.getElementById("modal-confirm"),
+
+  // RPG
+  healthBar: document.getElementById("health-bar"),
+  roastMessage: document.getElementById("roast-message"),
+
+  // Navigation
+  bottomNav: document.querySelector(".bottom-nav"),
+  navItems: document.querySelectorAll(".nav-item"),
+  pages: document.querySelectorAll(".page"),
+
+  // Statistics Page
+  statIncome: document.getElementById("stat-income"),
+  statExpense: document.getElementById("stat-expense"),
+  statAvgIncome: document.getElementById("stat-avg-income"),
+  statAvgExpense: document.getElementById("stat-avg-expense"),
+  avgIncomeLabel: document.getElementById("avg-income-label"),
+  avgExpenseLabel: document.getElementById("avg-expense-label"),
+  statCount: document.getElementById("stat-count"),
+  avgDailyBtn: document.getElementById("avg-daily"),
+  avgWeeklyBtn: document.getElementById("avg-weekly"),
+
+  // Settings Page
+  settingsEmail: document.getElementById("settings-email"),
+  privacyToggle: document.getElementById("privacy-toggle"),
+  exportDataBtn: document.getElementById("export-data"),
+  settingsLogout: document.getElementById("settings-logout"),
+
+  // Quick Amount Buttons
+  quickBtns: document.querySelectorAll(".quick-btn"),
+  
+  // Transaction Type Toggle
+  typeIncomeBtn: document.getElementById("type-income"),
+  typeExpenseBtn: document.getElementById("type-expense"),
+  txTypeToggle: document.querySelector(".tx-type-toggle"),
+  
+  // Wallet Page
+  walletList: document.getElementById("wallet-list"),
+  totalAllWallets: document.getElementById("total-all-wallets"),
+  btnAddWallet: document.getElementById("btn-add-wallet"),
+  
+  // Wallet Modal
+  walletModal: document.getElementById("wallet-modal"),
+  walletModalTitle: document.getElementById("wallet-modal-title"),
+  walletNameInput: document.getElementById("wallet-name"),
+  walletBalanceInput: document.getElementById("wallet-balance"),
+  walletIconPicker: document.getElementById("wallet-icon-picker"),
+  walletCancel: document.getElementById("wallet-cancel"),
+  walletSave: document.getElementById("wallet-save"),
+  
+  // Transaction Wallet Selector
+  walletSelect: document.getElementById("wallet-select"),
+};
+
+// --- STATE MANAGEMENT ---
+let state = {
+  transactions: [],
+  wallets: [],
+  unsubscribe: null,
+  unsubscribeWallets: null,
+  chartInstance: null,
+  deleteId: null,
+  editingWalletId: null,
+  selectedWalletIcon: "🏦",
+  isPrivacyMode: localStorage.getItem("isPrivacyMode") === "true",
+  avgPeriod: "daily", // "daily" or "weekly"
+  transactionType: "income", // "income" or "expense"
+};
+
+const RPG_CONFIG = {
+  MAX_HEALTH: 5000000,
+};
+
+// --- HELPER FUNCTIONS ---
+const formatRupiah = (angka) => {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(angka);
+};
+
+const formatMoneyDisplay = (angka) => {
+  if (state.isPrivacyMode) return "Rp ••••••";
+  return formatRupiah(angka);
+};
+
+const getMonthYear = (timestamp) => {
+  if (!timestamp) return "";
+  return timestamp
+    .toDate()
+    .toLocaleString("id-ID", { month: "long", year: "numeric" });
+};
+
+// --- UI NOTIFICATIONS (iOS Style) ---
+function showIOSAlert(message) {
+  DOM.alertMessage.innerText = message;
+  DOM.alertModal.classList.remove("hidden");
+}
+
+DOM.alertOkBtn.onclick = () => DOM.alertModal.classList.add("hidden");
+
+// --- CORE APP LOGIC ---
+
+// 1. Auth Listener
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    const userName = user.displayName || "Tamu (Anonymous)";
+    console.log("User Logged In:", userName);
+
+    DOM.loginScreen.classList.add("hidden");
+    DOM.appScreen.classList.remove("hidden");
+    loadTransactions(user.uid);
+    loadWallets(user.uid);
+  } else {
+    DOM.loginScreen.classList.remove("hidden");
+    DOM.appScreen.classList.add("hidden");
+    if (state.unsubscribe) state.unsubscribe();
+    if (state.unsubscribeWallets) state.unsubscribeWallets();
+    state.transactions = [];
+    state.wallets = [];
+    renderApp();
+  }
+});
+
+// 2. Load Transactions (Realtime)
+function loadTransactions(uid) {
+  const q = query(
+    collection(db, "transactions"),
+    where("uid", "==", uid),
+    orderBy("createdAt", "desc")
+  );
+
+  state.unsubscribe = onSnapshot(q, (snapshot) => {
+    state.transactions = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    populateFilterOptions();
+    renderApp();
+  });
+}
+
+// 3. Add Transaction
+async function addTransaction(e) {
+  e.preventDefault();
+  const textVal = DOM.textInput.value.trim();
+  const amountVal = DOM.amountInput.value.trim().replace(/[^0-9]/g, ''); // Only digits
+  const walletId = DOM.walletSelect?.value || null;
+
+  if (!textVal || !amountVal) {
+    showIOSAlert("Aduhh, isi keterangan dan jumlah uangmu dulu lee");
+    return;
+  }
+
+  try {
+    // Apply sign based on transaction type
+    let amountNum = Math.abs(+amountVal);
+    if (state.transactionType === "expense") {
+      amountNum = -amountNum;
+    }
+    
+    // Save transaction with wallet reference
+    await addDoc(collection(db, "transactions"), {
+      text: textVal,
+      amount: amountNum,
+      walletId: walletId,
+      uid: auth.currentUser.uid,
+      createdAt: serverTimestamp(),
+    });
+
+    // Update wallet balance if wallet selected
+    if (walletId) {
+      const wallet = state.wallets.find(w => w.id === walletId);
+      if (wallet) {
+        const newBalance = (wallet.balance || 0) + amountNum;
+        await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(async ({ updateDoc }) => {
+          await updateDoc(doc(db, "wallets", walletId), {
+            balance: newBalance,
+          });
+        });
+      }
+    }
+
+    DOM.textInput.value = "";
+    DOM.amountInput.value = "";
+
+    // Trigger Effects
+    if (amountNum > 0) {
+      triggerConfetti();
+      triggerHealAnimation();
+      playTransactionSound("Pemasukan", amountNum);
+    } else {
+      triggerShakeAnimation();
+      playTransactionSound("Pengeluaran", Math.abs(amountNum));
+    }
+  } catch (error) {
+    showIOSAlert("Gagal menyimpan: " + error.message);
+  }
+}
+
+// 4. Delete Transaction Logic
+window.removeTransaction = (id) => {
+  state.deleteId = id;
+  DOM.deleteModal.classList.remove("hidden");
+};
+
+DOM.modalCancel.onclick = () => {
+  DOM.deleteModal.classList.add("hidden");
+  state.deleteId = null;
+};
+
+DOM.modalConfirm.onclick = async () => {
+  if (state.deleteId) {
+    await deleteDoc(doc(db, "transactions", state.deleteId));
+    DOM.deleteModal.classList.add("hidden");
+    state.deleteId = null;
+  }
+};
+
+// --- RENDER FUNCTIONS ---
+
+function renderApp() {
+  DOM.list.innerHTML = "";
+  const filtered = getFilteredTransactions();
+
+  // Render List
+  filtered.forEach(renderTransactionItem);
+
+  // Calculate Totals
+  const amounts = filtered.map((t) => t.amount);
+  const total = amounts.reduce((acc, item) => acc + item, 0);
+  const income = amounts
+    .filter((item) => item > 0)
+    .reduce((acc, item) => acc + item, 0);
+  const expense =
+    amounts.filter((item) => item < 0).reduce((acc, item) => acc + item, 0) *
+    -1;
+
+  // Update UI Text
+  DOM.balance.innerText = formatMoneyDisplay(total);
+  DOM.moneyPlus.innerText = state.isPrivacyMode
+    ? "+Rp ••••••"
+    : `+${formatRupiah(income)}`;
+  DOM.moneyMinus.innerText = state.isPrivacyMode
+    ? "-Rp ••••••"
+    : `-${formatRupiah(expense)}`;
+
+  // Update Modules
+  updateChart(income, expense, total);
+  updateRPG(total);
+  updatePrivacyIcon();
+}
+
+function renderTransactionItem(transaction) {
+  const sign = transaction.amount < 0 ? "-" : "+";
+  const item = document.createElement("li");
+  item.classList.add(transaction.amount < 0 ? "minus" : "plus");
+
+  let dateString = "Baru saja";
+  if (transaction.createdAt) {
+    const dateObj = transaction.createdAt.seconds
+      ? new Date(transaction.createdAt.seconds * 1000)
+      : new Date(transaction.createdAt);
+
+    dateString = dateObj.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  const amountDisplay = state.isPrivacyMode
+    ? "Rp ••••••"
+    : formatRupiah(Math.abs(transaction.amount));
+
+  item.innerHTML = `
+    <div class="li-content">
+      <div class="tx-details">
+        <span class="tx-name">${transaction.text}</span>
+        <span class="tx-amount">${sign}${amountDisplay}</span>
+        <span class="tx-date">${dateString}</span>
+      </div>
+    </div>
+    <button class="delete-btn" onclick="removeTransaction('${transaction.id}')">
+      <span class="trash-icon">🗑️</span>
+    </button>
+  `;
+
+  // Mobile touch handling
+  item.addEventListener("click", (e) => {
+    if (e.target.closest(".delete-btn")) return;
+    document
+      .querySelectorAll(".list li")
+      .forEach((el) => el.classList.remove("active-mobile"));
+    item.classList.add("active-mobile");
+  });
+
+  DOM.list.appendChild(item);
+}
+
+// --- CHART & GRAPHICS ---
+function updateChart(income, expense, total) {
+  if (state.chartInstance) {
+    state.chartInstance.destroy();
+  }
+
+  state.chartInstance = new Chart(DOM.chartCtx, {
+    type: "doughnut",
+    plugins: [ChartDataLabels],
+    data: {
+      labels: ["Pemasukan", "Pengeluaran"],
+      datasets: [
+        {
+          data: [income, expense],
+          backgroundColor: ["#2ecc71", "#c0392b"],
+          borderWidth: 1,
+          borderColor: "#ffffff",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom" },
+        datalabels: {
+          color: "#fff",
+          font: { weight: "bold", size: 14 },
+          formatter: (value) => {
+            if (income + expense === 0) return "0%";
+            return ((value * 100) / (income + expense)).toFixed(1) + "%";
+          },
+        },
+      },
+    },
+  });
+}
+
+// --- FILTER LOGIC ---
+function populateFilterOptions() {
+  const currentSelection = DOM.filterMonth.value;
+  const months = new Set();
+
+  state.transactions.forEach((t) => {
+    if (t.createdAt) months.add(getMonthYear(t.createdAt));
+  });
+
+  DOM.filterMonth.innerHTML = '<option value="all">Semua Waktu</option>';
+  months.forEach((month) => {
+    const option = document.createElement("option");
+    option.value = month;
+    option.innerText = month;
+    DOM.filterMonth.appendChild(option);
+  });
+
+  if ([...months].includes(currentSelection)) {
+    DOM.filterMonth.value = currentSelection;
+  }
+}
+
+function getFilteredTransactions() {
+  const selected = DOM.filterMonth.value;
+  if (selected === "all") return state.transactions;
+  return state.transactions.filter(
+    (t) => getMonthYear(t.createdAt) === selected
+  );
+}
+
+DOM.filterMonth.addEventListener("change", renderApp);
+
+// --- RPG & GAMIFICATION ---
+function updateRPG(totalSaldo) {
+  // Health Bar
+  let percentage = (totalSaldo / RPG_CONFIG.MAX_HEALTH) * 100;
+  percentage = Math.max(0, Math.min(100, percentage)); // Clamp 0-100
+
+  DOM.healthBar.style.width = `${percentage}%`;
+
+  if (percentage < 20) DOM.healthBar.style.background = "#c0392b";
+  else if (percentage < 50) DOM.healthBar.style.background = "#f1c40f";
+  else DOM.healthBar.style.background = "#2ecc71";
+
+  // Roasting Text
+  let text = "🤔 Hmm, uangnya lari kemana aja nih?";
+  if (totalSaldo < 0) text = "💀 Udah minus, masih mau gaya? Sadar diri woy!";
+  else if (totalSaldo === 0)
+    text = "🕸️ Dompet kosong melompong. Laba-laba aja males bersarang.";
+  else if (totalSaldo < 100000)
+    text = "🤏 Saldo kritis! Jangan beli kopi mahal-mahal.";
+  else if (totalSaldo < 500000)
+    text = "😐 Lumayan lah, cukup buat bertahan hidup seminggu.";
+  else if (totalSaldo < 2000000)
+    text = "📈 Nah gitu dong, mulai kelihatan warnanya.";
+  else if (totalSaldo >= 5000000) text = "👑 Ampun Sultan! Traktir dong kak!";
+
+  DOM.roastMessage.innerText = text;
+}
+
+function triggerConfetti() {
+  confetti({
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors: ["#2ecc71", "#f1c40f", "#ecf0f1"],
+  });
+}
+
+function triggerShakeAnimation() {
+  document.body.classList.add("shake-animation");
+  setTimeout(() => document.body.classList.remove("shake-animation"), 500);
+}
+
+function triggerHealAnimation() {
+  DOM.balance.classList.add("heal-animation");
+  setTimeout(() => DOM.balance.classList.remove("heal-animation"), 500);
+}
+
+// --- PRIVACY MODE ---
+function updatePrivacyIcon() {
+  DOM.privacyBtn.innerText = state.isPrivacyMode ? "🙈" : "👁️";
+}
+
+DOM.privacyBtn.onclick = () => {
+  state.isPrivacyMode = !state.isPrivacyMode;
+  localStorage.setItem("isPrivacyMode", state.isPrivacyMode);
+  renderApp();
+};
+
+// --- PDF EXPORT FEATURE ---
+DOM.btnDownloadPdf.onclick = async () => {
+  const originalText = DOM.btnDownloadPdf.innerHTML;
+  DOM.btnDownloadPdf.innerText = "⏳ Otw lee...";
+  DOM.btnDownloadPdf.disabled = true;
+
+  try {
+    if (!window.jspdf) throw new Error("Library PDF belum siap.");
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Font Helper
+    const fetchFont = async (url) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Font error");
+      const buff = await res.arrayBuffer();
+      let binary = "";
+      const bytes = new Uint8Array(buff);
+      for (let i = 0; i < bytes.byteLength; i++)
+        binary += String.fromCharCode(bytes[i]);
+      return window.btoa(binary);
+    };
+
+    // Load Fonts
+    let fontName = "helvetica";
+    try {
+      const reg = await fetchFont(
+        "https://cdn.jsdelivr.net/gh/rsms/inter@4.0/font-files/Inter-Regular.ttf"
+      );
+      const bold = await fetchFont(
+        "https://cdn.jsdelivr.net/gh/rsms/inter@4.0/font-files/Inter-Bold.ttf"
+      );
+      doc.addFileToVFS("Inter-R.ttf", reg);
+      doc.addFileToVFS("Inter-B.ttf", bold);
+      doc.addFont("Inter-R.ttf", "Inter", "normal");
+      doc.addFont("Inter-B.ttf", "Inter", "bold");
+      fontName = "Inter";
+    } catch (e) {
+      console.warn("Pakai font default");
+    }
+
+    const data = getFilteredTransactions();
+    if (data.length === 0) throw new Error("Tidak ada data transaksi.");
+
+    // Calculations
+    const inc = data
+      .filter((t) => t.amount > 0)
+      .reduce((a, t) => a + t.amount, 0);
+    const exp = data
+      .filter((t) => t.amount < 0)
+      .reduce((a, t) => a + Math.abs(t.amount), 0);
+    const total = inc - exp;
+    const fmt = (n) => "Rp" + n.toLocaleString("id-ID");
+    const bulan = DOM.filterMonth.options[DOM.filterMonth.selectedIndex].text;
+
+    // --- PDF DRAWING ---
+    // Header Box
+    doc.setFillColor(18, 18, 18);
+    doc.roundedRect(14, 10, 182, 25, 4, 4, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont(fontName, "bold");
+    doc.text("Dompetku", 105, 22.5, { align: "center", baseline: "middle" });
+
+    // User Info
+    const uName = auth.currentUser
+      ? auth.currentUser.displayName || "Pengguna"
+      : "Tamu";
+    const uEmail = auth.currentUser ? auth.currentUser.email : "-";
+
+    doc.setFillColor(248, 248, 248);
+    doc.setDrawColor(230, 230, 230);
+    doc.roundedRect(14, 40, 85, 22, 3, 3, "FD");
+
+    doc.setTextColor(40, 40, 40);
+    doc.setFontSize(10);
+    doc.setFont(fontName, "bold");
+    doc.text(uName, 19, 48);
+    doc.setTextColor(120, 120, 120);
+    doc.setFontSize(8);
+    doc.setFont(fontName, "normal");
+    doc.text(uEmail, 19, 55);
+
+    // Summary Right
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.text("Periode:", 196, 42, { align: "right" });
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text(bulan, 196, 47, { align: "right" });
+
+    // Total Income
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.text("Total Pemasukan:", 196, 53, { align: "right" });
+    doc.setFontSize(10);
+    doc.setTextColor(0, 170, 19);
+    doc.setFont(fontName, "bold");
+    doc.text(fmt(inc), 196, 58, { align: "right" });
+
+    // Total Expense
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.setFont(fontName, "normal");
+    doc.text("Total Pengeluaran:", 196, 64, { align: "right" });
+    doc.setFontSize(10);
+    doc.setTextColor(192, 57, 43);
+    doc.setFont(fontName, "bold");
+    doc.text(fmt(exp), 196, 69, { align: "right" });
+
+    // Balance
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.setFont(fontName, "normal");
+    doc.text("Sisa Saldo:", 196, 75, { align: "right" });
+    doc.setFontSize(12);
+    doc.setTextColor(0, 170, 19);
+    doc.setFont(fontName, "bold");
+    doc.text(fmt(total), 196, 80, { align: "right" });
+
+    // Table
+    const body = data.map((t) => {
+      let dStr = "-";
+      if (t.createdAt) {
+        const d = t.createdAt.seconds
+          ? new Date(t.createdAt.seconds * 1000)
+          : new Date(t.createdAt);
+        dStr =
+          d.toLocaleDateString("id-ID") +
+          "\n" +
+          d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+      }
+      return [
+        dStr,
+        t.text,
+        t.amount < 0 ? "Pengeluaran" : "Pemasukan",
+        fmt(Math.abs(t.amount)),
+      ];
+    });
+
+    doc.autoTable({
+      startY: 70,
+      head: [["Tanggal", "Keterangan", "Tipe", "Nominal"]],
+      body: body,
+      theme: "grid",
+      styles: {
+        font: fontName,
+        fontSize: 9,
+        cellPadding: 5,
+        valign: "middle",
+        lineColor: [230, 230, 230],
+      },
+      headStyles: {
+        fillColor: [240, 255, 240],
+        textColor: [30, 30, 30],
+        fontStyle: "bold",
+      },
+      columnStyles: { 3: { halign: "right", fontStyle: "bold" } },
+      didParseCell: (d) => {
+        if (d.section === "body" && d.column.index === 3) {
+          d.cell.styles.textColor =
+            body[d.row.index][2] === "Pengeluaran"
+              ? [220, 50, 50]
+              : [0, 150, 0];
+        }
+      },
+    });
+
+    // Footer
+    const pCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(180, 180, 180);
+      doc.text("Dicetak oleh Dompetku", 14, 285);
+      doc.text("Halaman " + i, 195, 285, { align: "right" });
+    }
+
+    doc.save(`Laporan_Dompetku_${bulan}.pdf`);
+  } catch (e) {
+    showIOSAlert("PDF Gagal: " + e.message);
+  } finally {
+    DOM.btnDownloadPdf.innerHTML = originalText;
+    DOM.btnDownloadPdf.disabled = false;
+  }
+};
+
+// --- GENERAL EVENT LISTENERS ---
+DOM.loginBtn.onclick = () => signInWithPopup(auth, provider);
+
+DOM.anonLoginBtn.onclick = () => {
+  signInAnonymously(auth).catch((e) => alert("Gagal tamu: " + e.message));
+};
+
+// Logout button removed from Beranda, now only in Settings page
+if (DOM.logoutBtn) {
+  DOM.logoutBtn.onclick = () => signOut(auth);
+}
+
+DOM.form.addEventListener("submit", addTransaction);
+
+// Input Validation (Numbers Only for Amount)
+if (DOM.amountInput) {
+  DOM.amountInput.addEventListener("input", function () {
+    this.value = this.value.replace(/[^0-9]/g, ""); // Allow only numbers, no minus sign
+  });
+}
+
+// ============================================
+// TRANSACTION TYPE TOGGLE
+// ============================================
+
+function setTransactionType(type) {
+  state.transactionType = type;
+  
+  // Update visually
+  if (DOM.typeIncomeBtn && DOM.typeExpenseBtn && DOM.txTypeToggle) {
+    DOM.typeIncomeBtn.classList.remove("active");
+    DOM.typeExpenseBtn.classList.remove("active");
+    
+    if (type === "income") {
+      DOM.typeIncomeBtn.classList.add("active");
+      DOM.txTypeToggle.classList.remove("expense");
+      DOM.txTypeToggle.classList.add("income");
+    } else {
+      DOM.typeExpenseBtn.classList.add("active");
+      DOM.txTypeToggle.classList.remove("income");
+      DOM.txTypeToggle.classList.add("expense");
+    }
+  }
+}
+
+// Event Listeners for Type Toggle
+if (DOM.typeIncomeBtn) {
+  DOM.typeIncomeBtn.addEventListener("click", () => setTransactionType("income"));
+}
+if (DOM.typeExpenseBtn) {
+  DOM.typeExpenseBtn.addEventListener("click", () => setTransactionType("expense"));
+}
+
+// Initialize toggle state
+setTransactionType("income");
+
+// Quick Amount Buttons Logic
+if (DOM.quickBtns) {
+  DOM.quickBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const amount = btn.getAttribute("data-amount");
+      if (DOM.amountInput) {
+        DOM.amountInput.value = amount;
+      }
+    });
+  });
+}
+
+// ============================================
+// NAVIGATION SYSTEM
+// ============================================
+
+function navigateToPage(pageName) {
+  // Remove active from all nav items and pages
+  DOM.navItems.forEach(item => item.classList.remove("active"));
+  DOM.pages.forEach(page => page.classList.remove("active"));
+
+  // Find and activate the target nav item
+  const targetNavItem = document.querySelector(`.nav-item[data-page="${pageName}"]`);
+  if (targetNavItem) {
+    targetNavItem.classList.add("active");
+    
+    // Trigger ripple effect
+    const ripple = targetNavItem.querySelector(".nav-ripple");
+    if (ripple) {
+      ripple.classList.remove("animate");
+      void ripple.offsetWidth; // Force reflow
+      ripple.classList.add("animate");
+      setTimeout(() => ripple.classList.remove("animate"), 600);
+    }
+  }
+
+  // Find and activate the target page
+  const targetPage = document.getElementById(`page-${pageName}`);
+  if (targetPage) {
+    targetPage.classList.add("active");
+  }
+
+  // Update statistics when navigating to stats page
+  if (pageName === "stats") {
+    updateStatistics();
+  }
+
+  // Update settings when navigating to settings page
+  if (pageName === "settings") {
+    updateSettingsPage();
+  }
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// Nav item click handlers - Initialize after checking elements exist
+function initNavigation() {
+  const navItems = document.querySelectorAll(".nav-item");
+  const pages = document.querySelectorAll(".page");
+  
+  console.log("Initializing navigation, found", navItems.length, "nav items");
+  
+  navItems.forEach(item => {
+    item.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const pageName = item.dataset.page;
+      console.log("Nav clicked:", pageName);
+      
+      // Remove active from all
+      navItems.forEach(i => i.classList.remove("active"));
+      pages.forEach(p => p.classList.remove("active"));
+      
+      // Add active to clicked item
+      item.classList.add("active");
+      
+      // Show target page
+      const targetPage = document.getElementById(`page-${pageName}`);
+      if (targetPage) {
+        targetPage.classList.add("active");
+      }
+      
+      // Update pages when needed
+      if (pageName === "stats") {
+        updateStatistics();
+      }
+      if (pageName === "settings") {
+        updateSettingsPage();
+      }
+      if (pageName === "wallets") {
+        renderWallets();
+      }
+      
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+}
+
+// Initialize navigation
+initNavigation();
+
+// ============================================
+// STATISTICS PAGE FUNCTIONS
+// ============================================
+
+function updateStatistics() {
+  const filtered = getFilteredTransactions();
+  const amounts = filtered.map(t => t.amount);
+  
+  const income = amounts.filter(a => a > 0).reduce((acc, a) => acc + a, 0);
+  const expense = amounts.filter(a => a < 0).reduce((acc, a) => acc + Math.abs(a), 0);
+  const count = filtered.length;
+  
+  // Calculate averages based on period (daily = 30 days, weekly = 4 weeks)
+  const divisor = state.avgPeriod === "daily" ? 30 : 4;
+  const avgIncome = income / divisor;
+  const avgExpense = expense / divisor;
+  
+  // Update labels based on period
+  const periodLabel = state.avgPeriod === "daily" ? "/ Hari" : "/ Minggu";
+  if (DOM.avgIncomeLabel) {
+    DOM.avgIncomeLabel.textContent = `Rata-rata Pemasukan ${periodLabel}`;
+  }
+  if (DOM.avgExpenseLabel) {
+    DOM.avgExpenseLabel.textContent = `Rata-rata Pengeluaran ${periodLabel}`;
+  }
+
+  if (DOM.statIncome) {
+    DOM.statIncome.textContent = state.isPrivacyMode ? "Rp ••••••" : formatRupiah(income);
+  }
+  if (DOM.statExpense) {
+    DOM.statExpense.textContent = state.isPrivacyMode ? "Rp ••••••" : formatRupiah(expense);
+  }
+  if (DOM.statAvgIncome) {
+    DOM.statAvgIncome.textContent = state.isPrivacyMode ? "Rp ••••••" : formatRupiah(Math.round(avgIncome));
+  }
+  if (DOM.statAvgExpense) {
+    DOM.statAvgExpense.textContent = state.isPrivacyMode ? "Rp ••••••" : formatRupiah(Math.round(avgExpense));
+  }
+  if (DOM.statCount) {
+    DOM.statCount.textContent = count;
+  }
+}
+
+// Toggle average period (daily/weekly)
+function setAvgPeriod(period) {
+  state.avgPeriod = period;
+  
+  // Update button states
+  if (DOM.avgDailyBtn) {
+    DOM.avgDailyBtn.classList.toggle("active", period === "daily");
+  }
+  if (DOM.avgWeeklyBtn) {
+    DOM.avgWeeklyBtn.classList.toggle("active", period === "weekly");
+  }
+  
+  // Update toggle container class for sliding animation
+  const toggleContainer = document.querySelector(".avg-toggle");
+  if (toggleContainer) {
+    toggleContainer.classList.toggle("weekly", period === "weekly");
+  }
+  
+  // Recalculate statistics
+  updateStatistics();
+}
+
+// Event listeners for toggle buttons
+if (DOM.avgDailyBtn) {
+  DOM.avgDailyBtn.addEventListener("click", () => setAvgPeriod("daily"));
+}
+if (DOM.avgWeeklyBtn) {
+  DOM.avgWeeklyBtn.addEventListener("click", () => setAvgPeriod("weekly"));
+}
+
+// ============================================
+// SETTINGS PAGE FUNCTIONS
+// ============================================
+
+function updateSettingsPage() {
+  // Update email display
+  if (DOM.settingsEmail && auth.currentUser) {
+    const email = auth.currentUser.email || "Mode Tamu (Anonymous)";
+    DOM.settingsEmail.textContent = email;
+  }
+
+  // Sync privacy toggle state
+  if (DOM.privacyToggle) {
+    DOM.privacyToggle.checked = state.isPrivacyMode;
+  }
+}
+
+// Privacy toggle in settings
+if (DOM.privacyToggle) {
+  DOM.privacyToggle.addEventListener("change", function() {
+    state.isPrivacyMode = this.checked;
+    localStorage.setItem("isPrivacyMode", state.isPrivacyMode);
+    renderApp();
+    updateStatistics();
+  });
+}
+
+// Export data button in settings
+if (DOM.exportDataBtn) {
+  DOM.exportDataBtn.addEventListener("click", () => {
+    DOM.btnDownloadPdf.click();
+  });
+}
+
+// Logout from settings
+if (DOM.settingsLogout) {
+  DOM.settingsLogout.addEventListener("click", () => {
+    signOut(auth);
+  });
+}
+
+// ============================================
+// QUICK AMOUNT BUTTONS
+// ============================================
+
+DOM.quickBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const amount = btn.dataset.amount;
+    if (DOM.amountInput) {
+      DOM.amountInput.value = amount;
+      DOM.amountInput.focus();
+    }
+  });
+});
+
+// ============================================
+// SYNC PRIVACY BUTTON WITH SETTINGS TOGGLE
+// ============================================
+
+// Override the original privacy button to sync with settings toggle
+if (DOM.privacyBtn) {
+  DOM.privacyBtn.onclick = () => {
+    state.isPrivacyMode = !state.isPrivacyMode;
+    localStorage.setItem("isPrivacyMode", state.isPrivacyMode);
+    if (DOM.privacyToggle) {
+      DOM.privacyToggle.checked = state.isPrivacyMode;
+    }
+    renderApp();
+  };
+}
+
+// ============================================
+// WALLET SYSTEM
+// ============================================
+
+// Load wallets from Firebase
+function loadWallets(userId) {
+  if (state.unsubscribeWallets) {
+    state.unsubscribeWallets();
+  }
+
+  // Simple query without orderBy to avoid needing composite index
+  const q = query(
+    collection(db, "wallets"),
+    where("uid", "==", userId)
+  );
+
+  state.unsubscribeWallets = onSnapshot(q, (snapshot) => {
+    state.wallets = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    // Sort locally by name
+    state.wallets.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    renderWallets();
+    populateWalletSelect();
+  });
+}
+
+// Populate wallet dropdown in transaction form
+function populateWalletSelect() {
+  if (!DOM.walletSelect) return;
+  
+  const currentValue = DOM.walletSelect.value;
+  DOM.walletSelect.innerHTML = '<option value="">-- Pilih Dompet --</option>';
+  
+  state.wallets.forEach(wallet => {
+    const option = document.createElement('option');
+    option.value = wallet.id;
+    option.textContent = `${wallet.icon} ${wallet.name}`;
+    DOM.walletSelect.appendChild(option);
+  });
+  
+  // Restore selection if still exists
+  if (currentValue && state.wallets.find(w => w.id === currentValue)) {
+    DOM.walletSelect.value = currentValue;
+  }
+}
+
+// Render wallet list (styled like transaction history)
+function renderWallets() {
+  if (!DOM.walletList) return;
+  
+  if (state.wallets.length === 0) {
+    DOM.walletList.innerHTML = `
+      <div class="wallet-empty-state">
+        <span class="wallet-empty-icon">💳</span>
+        <p>Belum ada dompet. Tambahkan dompet pertamamu!</p>
+      </div>
+    `;
+  } else {
+    DOM.walletList.innerHTML = state.wallets.map(wallet => {
+      const balanceClass = wallet.balance < 0 ? 'minus' : 'plus';
+      const formattedBalance = state.isPrivacyMode ? 'Rp ••••••' : formatRupiah(wallet.balance);
+      return `
+        <li class="${balanceClass}">
+          <div class="li-content">
+            <div class="tx-details">
+              <span class="tx-name">${wallet.icon} ${wallet.name}</span>
+              <span class="tx-amount ${balanceClass}">${formattedBalance}</span>
+            </div>
+            <div class="tx-actions">
+              <button class="tx-edit-btn" onclick="event.stopPropagation(); editWallet('${wallet.id}')">✏️</button>
+              <button class="tx-delete-btn" onclick="event.stopPropagation(); confirmDeleteWallet('${wallet.id}')">🗑️</button>
+            </div>
+          </div>
+        </li>
+      `;
+    }).join('');
+  }
+  
+  // Update total
+  updateTotalBalance();
+}
+
+// Calculate and display total balance
+function updateTotalBalance() {
+  const total = state.wallets.reduce((sum, w) => sum + (w.balance || 0), 0);
+  if (DOM.totalAllWallets) {
+    DOM.totalAllWallets.textContent = state.isPrivacyMode ? 'Rp ••••••' : formatRupiah(total);
+  }
+}
+
+// Open wallet modal for adding
+function openAddWalletModal() {
+  state.editingWalletId = null;
+  state.selectedWalletIcon = "🏦";
+  
+  if (DOM.walletModalTitle) DOM.walletModalTitle.textContent = "Tambah Dompet";
+  if (DOM.walletNameInput) DOM.walletNameInput.value = "";
+  if (DOM.walletBalanceInput) DOM.walletBalanceInput.value = "";
+  
+  // Reset icon picker
+  document.querySelectorAll('.wallet-icon-option').forEach(opt => {
+    opt.classList.remove('selected');
+    if (opt.dataset.icon === "🏦") opt.classList.add('selected');
+  });
+  
+  if (DOM.walletModal) DOM.walletModal.classList.remove("hidden");
+}
+
+// Open wallet modal for editing
+window.editWallet = (walletId) => {
+  const wallet = state.wallets.find(w => w.id === walletId);
+  if (!wallet) return;
+  
+  state.editingWalletId = walletId;
+  state.selectedWalletIcon = wallet.icon;
+  
+  if (DOM.walletModalTitle) DOM.walletModalTitle.textContent = "Edit Dompet";
+  if (DOM.walletNameInput) DOM.walletNameInput.value = wallet.name;
+  if (DOM.walletBalanceInput) DOM.walletBalanceInput.value = wallet.balance.toString();
+  
+  // Set icon picker
+  document.querySelectorAll('.wallet-icon-option').forEach(opt => {
+    opt.classList.remove('selected');
+    if (opt.dataset.icon === wallet.icon) opt.classList.add('selected');
+  });
+  
+  if (DOM.walletModal) DOM.walletModal.classList.remove("hidden");
+};
+
+// Close wallet modal
+function closeWalletModal() {
+  if (DOM.walletModal) DOM.walletModal.classList.add("hidden");
+  state.editingWalletId = null;
+}
+
+// Save wallet (add or update)
+async function saveWallet() {
+  const name = DOM.walletNameInput?.value.trim();
+  const balanceStr = DOM.walletBalanceInput?.value.trim().replace(/[^0-9-]/g, '');
+  const balance = parseInt(balanceStr) || 0;
+  
+  if (!name) {
+    showIOSAlert("Nama dompet tidak boleh kosong!");
+    return;
+  }
+  
+  try {
+    if (state.editingWalletId) {
+      // Update existing wallet
+      await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(async ({ updateDoc }) => {
+        await updateDoc(doc(db, "wallets", state.editingWalletId), {
+          name: name,
+          icon: state.selectedWalletIcon,
+          balance: balance,
+        });
+      });
+    } else {
+      // Add new wallet
+      await addDoc(collection(db, "wallets"), {
+        name: name,
+        icon: state.selectedWalletIcon,
+        balance: balance,
+        uid: auth.currentUser.uid,
+        createdAt: serverTimestamp(),
+      });
+    }
+    closeWalletModal();
+  } catch (error) {
+    showIOSAlert("Gagal menyimpan: " + error.message);
+  }
+}
+
+// Icon picker click handler
+if (DOM.walletIconPicker) {
+  DOM.walletIconPicker.addEventListener('click', (e) => {
+    if (e.target.classList.contains('wallet-icon-option')) {
+      document.querySelectorAll('.wallet-icon-option').forEach(opt => opt.classList.remove('selected'));
+      e.target.classList.add('selected');
+      state.selectedWalletIcon = e.target.dataset.icon;
+    }
+  });
+}
+
+// Wallet modal button handlers
+if (DOM.btnAddWallet) {
+  DOM.btnAddWallet.addEventListener('click', openAddWalletModal);
+}
+
+if (DOM.walletCancel) {
+  DOM.walletCancel.addEventListener('click', closeWalletModal);
+}
+
+if (DOM.walletSave) {
+  DOM.walletSave.addEventListener('click', saveWallet);
+}
+
+// Balance input - numbers only
+if (DOM.walletBalanceInput) {
+  DOM.walletBalanceInput.addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '');
+  });
+}
+
+// Delete wallet confirmation
+window.confirmDeleteWallet = (walletId) => {
+  state.deleteWalletId = walletId;
+  const wallet = state.wallets.find(w => w.id === walletId);
+  if (wallet) {
+    // Use existing delete modal
+    DOM.deleteModal.classList.remove("hidden");
+    // Temporarily change modal confirm handler
+    DOM.modalConfirm.onclick = async () => {
+      await deleteWallet(walletId);
+      DOM.deleteModal.classList.add("hidden");
+      state.deleteWalletId = null;
+    };
+  }
+};
+
+// Delete wallet from Firebase
+async function deleteWallet(walletId) {
+  try {
+    await deleteDoc(doc(db, "wallets", walletId));
+  } catch (error) {
+    showIOSAlert("Gagal menghapus: " + error.message);
+  }
+}

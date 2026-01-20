@@ -24,7 +24,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <link rel="stylesheet" href="style.css" />
+    <!-- CSS Modules -->
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/navigation.css" />
+    <link rel="stylesheet" href="css/pages.css" />
   </head>
   <body>
     <section id="login-screen" class="login-container">
@@ -48,7 +53,7 @@
       <div id="page-home" class="page active">
         <div class="container">
           <header class="app-header">
-            <h2>Catatan Keuangan</h2>
+            <h2>Dompetku</h2>
             <div class="header-controls">
               <button id="privacy-btn" class="btn-small icon-btn">👁️</button>
             </div>
@@ -160,6 +165,14 @@
                 </button>
               </div>
 
+              <!-- Wallet Selector -->
+              <div class="form-control">
+                <label for="wallet-select">Pilih Dompet</label>
+                <select id="wallet-select" class="wallet-select">
+                  <option value="">-- Pilih Dompet --</option>
+                </select>
+              </div>
+
               <div class="form-control">
                 <label for="text">Keterangan</label>
                 <input
@@ -189,6 +202,28 @@
                 <span>✨</span> Simpan Transaksi
               </button>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== HALAMAN DOMPET ========== -->
+      <div id="page-wallets" class="page">
+        <div class="container">
+          <!-- Total Balance Card -->
+          <div class="total-balance-card">
+            <span class="total-balance-label">Total Kekayaan</span>
+            <span id="total-all-wallets" class="total-balance-amount">Rp 0</span>
+          </div>
+
+          <!-- Wallet List -->
+          <div class="wallet-section">
+            <div class="wallet-section-header">
+              <h3>Dompet Saya</h3>
+              <button id="btn-add-wallet" class="btn-add-wallet">+ Tambah</button>
+            </div>
+            <ul id="wallet-list" class="list wallet-list">
+              <!-- Wallets will be rendered here -->
+            </ul>
           </div>
         </div>
       </div>
@@ -253,6 +288,13 @@
           <span class="nav-label">Statistik</span>
         </div>
 
+        <div class="nav-item" data-page="wallets">
+          <div class="nav-circle nav-wallets">
+            <span class="nav-icon">💳</span>
+          </div>
+          <span class="nav-label">Dompet</span>
+        </div>
+
         <div class="nav-item nav-add-btn" data-page="add">
           <div class="nav-circle nav-add">
             <span class="nav-icon">➕</span>
@@ -269,9 +311,7 @@
       </nav>
     </div>
 
-    <script type="module" src="script.js"></script>
-
-    <div id="ios-modal" class="ios-modal-overlay hidden">
+    <div id="delete-modal" class="ios-modal-overlay hidden">
       <div class="ios-modal">
         <div class="ios-modal-text">
           <h3>Hapus Transaksi?</h3>
@@ -295,6 +335,45 @@
         </div>
       </div>
     </div>
+
+    <!-- ========== WALLET MODAL ========== -->
+    <div id="wallet-modal" class="ios-modal-overlay hidden">
+      <div class="ios-modal wallet-modal">
+        <div class="ios-modal-text">
+          <h3 id="wallet-modal-title">Tambah Dompet</h3>
+          <div class="wallet-form">
+            <div class="form-control">
+              <label>Nama Dompet</label>
+              <input type="text" id="wallet-name" placeholder="Contoh: BCA, GoPay, Cash" />
+            </div>
+            <div class="form-control">
+              <label>Icon</label>
+              <div class="wallet-icon-picker" id="wallet-icon-picker">
+                <span class="wallet-icon-option selected" data-icon="🏦">🏦</span>
+                <span class="wallet-icon-option" data-icon="💳">💳</span>
+                <span class="wallet-icon-option" data-icon="💵">💵</span>
+                <span class="wallet-icon-option" data-icon="🟢">🟢</span>
+                <span class="wallet-icon-option" data-icon="🔵">🔵</span>
+                <span class="wallet-icon-option" data-icon="🟣">🟣</span>
+                <span class="wallet-icon-option" data-icon="🟡">🟡</span>
+                <span class="wallet-icon-option" data-icon="📱">📱</span>
+              </div>
+            </div>
+            <div class="form-control">
+              <label>Saldo Awal</label>
+              <input type="text" id="wallet-balance" placeholder="Contoh: 500000" />
+            </div>
+          </div>
+        </div>
+        <div class="ios-modal-actions wallet-modal-actions">
+          <button id="wallet-cancel">Batal</button>
+          <button id="wallet-save" class="wallet-save-btn">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modular JavaScript -->
+    <script type="module" src="js/main.js"></script>
 
     <script>
       if ("serviceWorker" in navigator) {
