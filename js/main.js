@@ -109,6 +109,7 @@ async function addTransaction(e) {
   const textVal = DOM.textInput.value.trim();
   const amountVal = DOM.amountInput.value.trim().replace(/[^0-9]/g, "");
   const walletId = DOM.walletSelect?.value || null;
+  const category = DOM.categorySelect?.value || null;
 
   if (!textVal || !amountVal) {
     showIOSAlert("Isi keterangan dan jumlah uang!");
@@ -125,6 +126,7 @@ async function addTransaction(e) {
       text: textVal,
       amount: amountNum,
       walletId: walletId,
+      category: category,
       uid: auth.currentUser.uid,
       createdAt: serverTimestamp(),
     });
@@ -183,6 +185,79 @@ if (DOM.modalConfirm) {
 }
 
 /* ============================================
+   CATEGORY SYSTEM
+   ============================================ */
+
+// Category type state
+state.categoryType = "income";
+
+// Open category modal
+if (DOM.addCategoryBtn) {
+  DOM.addCategoryBtn.addEventListener("click", () => {
+    if (DOM.categoryModal) DOM.categoryModal.classList.remove("hidden");
+    if (DOM.newCategoryName) DOM.newCategoryName.value = "";
+    if (DOM.newCategoryEmoji) DOM.newCategoryEmoji.value = "";
+    state.categoryType = "income";
+    if (DOM.catTypeIncome) DOM.catTypeIncome.classList.add("active");
+    if (DOM.catTypeExpense) DOM.catTypeExpense.classList.remove("active");
+  });
+}
+
+// Close category modal
+if (DOM.categoryCancel) {
+  DOM.categoryCancel.addEventListener("click", () => {
+    if (DOM.categoryModal) DOM.categoryModal.classList.add("hidden");
+  });
+}
+
+// Toggle category type
+if (DOM.catTypeIncome) {
+  DOM.catTypeIncome.addEventListener("click", () => {
+    state.categoryType = "income";
+    DOM.catTypeIncome.classList.add("active");
+    if (DOM.catTypeExpense) DOM.catTypeExpense.classList.remove("active");
+  });
+}
+if (DOM.catTypeExpense) {
+  DOM.catTypeExpense.addEventListener("click", () => {
+    state.categoryType = "expense";
+    DOM.catTypeExpense.classList.add("active");
+    if (DOM.catTypeIncome) DOM.catTypeIncome.classList.remove("active");
+  });
+}
+
+// Save custom category
+if (DOM.categorySave) {
+  DOM.categorySave.addEventListener("click", () => {
+    const name = DOM.newCategoryName?.value.trim();
+    const emoji = DOM.newCategoryEmoji?.value.trim() || "📌";
+    
+    if (!name) {
+      showIOSAlert("Nama kategori tidak boleh kosong!");
+      return;
+    }
+    
+    // Add to dropdown
+    const optgroupId = state.categoryType === "income" ? "income-categories" : "expense-categories";
+    const optgroup = document.getElementById(optgroupId);
+    
+    if (optgroup && DOM.categorySelect) {
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = `${emoji} ${name}`;
+      optgroup.appendChild(option);
+      
+      // Select the new category
+      DOM.categorySelect.value = name;
+    }
+    
+    // Close modal
+    if (DOM.categoryModal) DOM.categoryModal.classList.add("hidden");
+    showIOSAlert(`Kategori "${name}" berhasil ditambahkan!`);
+  });
+}
+
+/* ============================================
    WALLETS
    ============================================ */
 
@@ -213,28 +288,58 @@ function renderWallets() {
       </div>
     `;
   } else {
-    DOM.walletList.innerHTML = state.wallets
-      .map((wallet) => {
-        const balanceClass = wallet.balance < 0 ? "minus" : "plus";
-        const formattedBalance = state.isPrivacyMode
-          ? "Rp ••••••"
-          : formatRupiah(wallet.balance);
-        return `
-        <li class="${balanceClass}">
-          <div class="li-content">
-            <div class="tx-details">
-              <span class="tx-name">${wallet.icon} ${wallet.name}</span>
-              <span class="tx-amount ${balanceClass}">${formattedBalance}</span>
-            </div>
-            <div class="tx-actions">
-              <button class="tx-edit-btn" onclick="event.stopPropagation(); window.editWallet('${wallet.id}')">✏️</button>
-              <button class="tx-delete-btn" onclick="event.stopPropagation(); window.confirmDeleteWallet('${wallet.id}')">🗑️</button>
-            </div>
+    DOM.walletList.innerHTML = "";
+    state.wallets.forEach((wallet) => {
+      const balanceClass = wallet.balance < 0 ? "minus" : "plus";
+      const formattedBalance = state.isPrivacyMode
+        ? "Rp ••••••"
+        : formatRupiah(wallet.balance);
+      
+      // Check if icon is base64 image or emoji
+      const iconHtml = wallet.icon && wallet.icon.startsWith("data:image")
+        ? `<img src="${wallet.icon}" class="wallet-custom-icon" alt="icon">`
+        : `<span>${wallet.icon}</span>`;
+      
+      const li = document.createElement("li");
+      li.className = balanceClass;
+      li.innerHTML = `
+        <div class="li-content">
+          <div class="tx-details">
+            <span class="tx-name">${iconHtml} ${wallet.name}</span>
+            <span class="tx-amount ${balanceClass}">${formattedBalance}</span>
           </div>
-        </li>
+        </div>
+        <div class="wallet-actions-slide">
+          <button class="wallet-edit-btn" data-id="${wallet.id}">✏️</button>
+          <button class="wallet-delete-btn" data-id="${wallet.id}">🗑️</button>
+        </div>
       `;
-      })
-      .join("");
+
+      // Edit button handler
+      li.querySelector(".wallet-edit-btn").onclick = (e) => {
+        e.stopPropagation();
+        window.editWallet(wallet.id);
+      };
+
+      // Delete button handler
+      li.querySelector(".wallet-delete-btn").onclick = (e) => {
+        e.stopPropagation();
+        window.confirmDeleteWallet(wallet.id);
+      };
+
+      // Swipe gesture for mobile
+      let startX = 0;
+      li.addEventListener("touchstart", (e) => {
+        startX = e.touches[0].clientX;
+      });
+      li.addEventListener("touchend", (e) => {
+        const diff = startX - e.changedTouches[0].clientX;
+        if (diff > 50) li.classList.add("active-mobile");
+        else li.classList.remove("active-mobile");
+      });
+
+      DOM.walletList.appendChild(li);
+    });
   }
 
   updateTotalBalance();
@@ -376,6 +481,51 @@ if (DOM.walletIconPicker) {
 if (DOM.walletBalanceInput) {
   DOM.walletBalanceInput.addEventListener("input", function () {
     this.value = this.value.replace(/[^0-9]/g, "");
+  });
+}
+
+// Custom Icon Upload Handler
+if (DOM.walletIconUpload) {
+  DOM.walletIconUpload.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file size (max 500KB)
+    if (file.size > 500 * 1024) {
+      showIOSAlert("Ukuran file terlalu besar! Maksimal 500KB.");
+      DOM.walletIconUpload.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target.result;
+      state.selectedWalletIcon = base64;
+      
+      // Show preview
+      if (DOM.customIconImg) DOM.customIconImg.src = base64;
+      if (DOM.customIconPreview) DOM.customIconPreview.classList.remove("hidden");
+      
+      // Deselect emoji icons
+      document.querySelectorAll(".wallet-icon-option").forEach((opt) => {
+        opt.classList.remove("selected");
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Remove Custom Icon
+if (DOM.removeCustomIcon) {
+  DOM.removeCustomIcon.addEventListener("click", () => {
+    DOM.walletIconUpload.value = "";
+    if (DOM.customIconPreview) DOM.customIconPreview.classList.add("hidden");
+    if (DOM.customIconImg) DOM.customIconImg.src = "";
+    
+    // Reset to default emoji
+    state.selectedWalletIcon = "🏦";
+    const defaultIcon = document.querySelector('.wallet-icon-option[data-icon="🏦"]');
+    if (defaultIcon) defaultIcon.classList.add("selected");
   });
 }
 
@@ -731,6 +881,196 @@ DOM.quickBtns.forEach((btn) => {
 if (DOM.amountInput) {
   DOM.amountInput.addEventListener("input", function () {
     this.value = this.value.replace(/[^0-9]/g, "");
+  });
+}
+
+/* ============================================
+   OCR & MEDIA INPUT
+   ============================================ */
+
+// Camera button - triggers camera input
+if (DOM.btnCamera) {
+  DOM.btnCamera.addEventListener("click", () => {
+    if (DOM.cameraInput) DOM.cameraInput.click();
+  });
+}
+
+// Gallery button - triggers file input
+if (DOM.btnGallery) {
+  DOM.btnGallery.addEventListener("click", () => {
+    if (DOM.galleryInput) DOM.galleryInput.click();
+  });
+}
+
+// Handle camera/gallery file selection
+function handleImageForOCR(file) {
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const imageData = e.target.result;
+    
+    // Show preview
+    if (DOM.ocrImage) DOM.ocrImage.src = imageData;
+    if (DOM.ocrPreview) DOM.ocrPreview.classList.remove("hidden");
+    if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = "Memproses gambar...";
+    if (DOM.ocrProgressFill) DOM.ocrProgressFill.style.width = "0%";
+    
+    // Run OCR with Tesseract.js
+    runOCR(imageData);
+  };
+  reader.readAsDataURL(file);
+}
+
+if (DOM.cameraInput) {
+  DOM.cameraInput.addEventListener("change", (e) => {
+    handleImageForOCR(e.target.files[0]);
+    e.target.value = ""; // Reset for re-selection
+  });
+}
+
+if (DOM.galleryInput) {
+  DOM.galleryInput.addEventListener("change", (e) => {
+    handleImageForOCR(e.target.files[0]);
+    e.target.value = ""; // Reset for re-selection
+  });
+}
+
+// OCR Processing with Tesseract.js
+async function runOCR(imageData) {
+  if (typeof Tesseract === "undefined") {
+    showIOSAlert("Tesseract.js belum dimuat. Refresh halaman.");
+    return;
+  }
+
+  try {
+    if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = "Membaca teks...";
+    
+    const result = await Tesseract.recognize(imageData, "ind+eng", {
+      logger: (m) => {
+        if (m.status === "recognizing text" && DOM.ocrProgressFill) {
+          const progress = Math.round(m.progress * 100);
+          DOM.ocrProgressFill.style.width = `${progress}%`;
+        }
+      },
+    });
+
+    const text = result.data.text;
+    console.log("OCR Result:", text);
+
+    // Extract numbers (potential amounts)
+    const numbers = text.match(/[\d.,]+/g);
+    if (numbers) {
+      // Find the largest number (likely the total)
+      const amounts = numbers
+        .map((n) => parseInt(n.replace(/[.,]/g, "")))
+        .filter((n) => !isNaN(n) && n > 0);
+      
+      if (amounts.length > 0) {
+        const maxAmount = Math.max(...amounts);
+        if (DOM.amountInput) DOM.amountInput.value = maxAmount.toString();
+        if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = `Ditemukan: Rp ${maxAmount.toLocaleString("id-ID")}`;
+      } else {
+        if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = "Tidak ada angka ditemukan";
+      }
+    } else {
+      if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = "Tidak ada angka ditemukan";
+    }
+
+    // Extract text for description (exclude numbers)
+    const cleanText = text.replace(/[\d.,]+/g, "").replace(/\s+/g, " ").trim();
+    if (cleanText && DOM.textInput && !DOM.textInput.value) {
+      // Take first 50 chars as description
+      DOM.textInput.value = cleanText.substring(0, 50);
+    }
+
+  } catch (error) {
+    console.error("OCR Error:", error);
+    if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = "Gagal membaca gambar";
+  }
+}
+
+// Cancel OCR preview
+if (DOM.ocrCancel) {
+  DOM.ocrCancel.addEventListener("click", () => {
+    if (DOM.ocrPreview) DOM.ocrPreview.classList.add("hidden");
+    if (DOM.ocrImage) DOM.ocrImage.src = "";
+    if (DOM.ocrProgressFill) DOM.ocrProgressFill.style.width = "0%";
+  });
+}
+
+/* ============================================
+   VOICE INPUT (Web Speech API)
+   ============================================ */
+
+let recognition = null;
+
+if (DOM.btnVoice) {
+  DOM.btnVoice.addEventListener("click", () => {
+    // Check browser support
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      showIOSAlert("Browser tidak mendukung voice input. Gunakan Chrome/Edge.");
+      return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.lang = "id-ID";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      if (DOM.voiceIndicator) DOM.voiceIndicator.classList.remove("hidden");
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      console.log("Voice Result:", transcript);
+      
+      // Parse the transcript
+      // Look for number patterns
+      const numbers = transcript.match(/\d+/g);
+      const textPart = transcript.replace(/\d+/g, "").trim();
+      
+      if (numbers && numbers.length > 0) {
+        // Use the largest number as amount
+        const amount = Math.max(...numbers.map(Number));
+        if (DOM.amountInput) DOM.amountInput.value = amount.toString();
+      }
+      
+      if (textPart && DOM.textInput) {
+        DOM.textInput.value = textPart;
+      } else if (!textPart && transcript && DOM.textInput) {
+        // If only numbers, put full transcript in description
+        DOM.textInput.value = transcript;
+      }
+
+      showIOSAlert(`Terdeteksi: "${transcript}"`);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech Error:", event.error);
+      if (event.error === "not-allowed") {
+        showIOSAlert("Izin mikrofon ditolak. Aktifkan di pengaturan browser.");
+      }
+    };
+
+    recognition.onend = () => {
+      if (DOM.voiceIndicator) DOM.voiceIndicator.classList.add("hidden");
+      recognition = null;
+    };
+
+    recognition.start();
+  });
+}
+
+// Stop voice recording
+if (DOM.voiceStop) {
+  DOM.voiceStop.addEventListener("click", () => {
+    if (recognition) {
+      recognition.stop();
+    }
   });
 }
 

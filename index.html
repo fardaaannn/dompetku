@@ -23,6 +23,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
     <!-- CSS Modules -->
     <link rel="stylesheet" href="css/variables.css" />
@@ -173,6 +175,35 @@
                 </select>
               </div>
 
+              <!-- Category Selector -->
+              <div class="form-control">
+                <label for="category-select">Kategori</label>
+                <div class="category-select-wrapper">
+                  <select id="category-select" class="category-select">
+                    <option value="">-- Pilih Kategori --</option>
+                    <!-- Income Categories -->
+                    <optgroup label="Pemasukan" id="income-categories">
+                      <option value="Gaji">💼 Gaji</option>
+                      <option value="Bonus">🎁 Bonus</option>
+                      <option value="Investasi">📈 Investasi</option>
+                      <option value="Hadiah">🎀 Hadiah</option>
+                      <option value="Lainnya">📦 Lainnya</option>
+                    </optgroup>
+                    <!-- Expense Categories -->
+                    <optgroup label="Pengeluaran" id="expense-categories">
+                      <option value="Makanan">🍔 Makanan</option>
+                      <option value="Transport">🚗 Transport</option>
+                      <option value="Belanja">🛒 Belanja</option>
+                      <option value="Tagihan">📄 Tagihan</option>
+                      <option value="Hiburan">🎮 Hiburan</option>
+                      <option value="Kesehatan">💊 Kesehatan</option>
+                      <option value="Lainnya">📦 Lainnya</option>
+                    </optgroup>
+                  </select>
+                  <button type="button" id="add-category-btn" class="add-category-btn">+</button>
+                </div>
+              </div>
+
               <div class="form-control">
                 <label for="text">Keterangan</label>
                 <input
@@ -196,6 +227,46 @@
                 <button type="button" class="quick-btn" data-amount="50000">50rb</button>
                 <button type="button" class="quick-btn" data-amount="100000">100rb</button>
                 <button type="button" class="quick-btn" data-amount="200000">200rb</button>
+              </div>
+
+              <!-- Media Input Section -->
+              <div class="media-input-section">
+                <label>Scan Struk / Input Suara</label>
+                <div class="media-buttons">
+                  <button type="button" id="btn-camera" class="media-btn">
+                    <span>📷</span>
+                    <small>Kamera</small>
+                  </button>
+                  <button type="button" id="btn-gallery" class="media-btn">
+                    <span>🖼️</span>
+                    <small>Galeri</small>
+                  </button>
+                  <button type="button" id="btn-voice" class="media-btn">
+                    <span>🎤</span>
+                    <small>Suara</small>
+                  </button>
+                </div>
+                <input type="file" id="gallery-input" accept="image/*" hidden>
+                <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
+                
+                <!-- OCR Preview -->
+                <div id="ocr-preview" class="ocr-preview hidden">
+                  <img id="ocr-image" src="" alt="Preview">
+                  <div class="ocr-status">
+                    <span id="ocr-status-text">Menunggu...</span>
+                    <div id="ocr-progress" class="ocr-progress-bar">
+                      <div id="ocr-progress-fill" class="ocr-progress-fill"></div>
+                    </div>
+                  </div>
+                  <button type="button" id="ocr-cancel" class="ocr-cancel-btn">✕</button>
+                </div>
+
+                <!-- Voice Recording Indicator -->
+                <div id="voice-indicator" class="voice-indicator hidden">
+                  <div class="voice-pulse"></div>
+                  <span>Mendengarkan...</span>
+                  <button type="button" id="voice-stop" class="voice-stop-btn">Selesai</button>
+                </div>
               </div>
 
               <button type="submit" class="btn submit-btn">
@@ -324,6 +395,40 @@
       </div>
     </div>
 
+    <!-- Category Modal -->
+    <div id="category-modal" class="ios-modal-overlay hidden">
+      <div class="ios-modal wallet-modal">
+        <div class="ios-modal-text">
+          <h3>Tambah Kategori</h3>
+          <div class="wallet-form">
+            <div class="form-control">
+              <label>Tipe Kategori</label>
+              <div class="tx-type-toggle" id="category-type-toggle">
+                <button type="button" id="cat-type-income" class="tx-type-btn active" data-type="income">
+                  💰 Pemasukan
+                </button>
+                <button type="button" id="cat-type-expense" class="tx-type-btn" data-type="expense">
+                  💸 Pengeluaran
+                </button>
+              </div>
+            </div>
+            <div class="form-control">
+              <label>Nama Kategori</label>
+              <input type="text" id="new-category-name" placeholder="Contoh: Freelance, Jajan, dll">
+            </div>
+            <div class="form-control">
+              <label>Emoji (opsional)</label>
+              <input type="text" id="new-category-emoji" placeholder="Contoh: 🎯" maxlength="2">
+            </div>
+          </div>
+        </div>
+        <div class="ios-modal-actions wallet-modal-actions">
+          <button id="category-cancel">Batal</button>
+          <button id="category-save" class="wallet-save-btn">Simpan</button>
+        </div>
+      </div>
+    </div>
+
     <div id="ios-alert-modal" class="ios-modal-overlay hidden">
       <div class="ios-modal">
         <div class="ios-modal-text">
@@ -357,6 +462,17 @@
                 <span class="wallet-icon-option" data-icon="🟣">🟣</span>
                 <span class="wallet-icon-option" data-icon="🟡">🟡</span>
                 <span class="wallet-icon-option" data-icon="📱">📱</span>
+              </div>
+              <!-- Custom Icon Upload -->
+              <div class="custom-icon-upload">
+                <label class="upload-btn" for="wallet-icon-upload">
+                  📷 Upload Icon Sendiri
+                </label>
+                <input type="file" id="wallet-icon-upload" accept="image/*" hidden>
+                <div id="custom-icon-preview" class="custom-icon-preview hidden">
+                  <img id="custom-icon-img" src="" alt="Preview">
+                  <button type="button" id="remove-custom-icon" class="remove-icon-btn">✕</button>
+                </div>
               </div>
             </div>
             <div class="form-control">

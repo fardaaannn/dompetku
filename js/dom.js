@@ -31,10 +31,35 @@ export const DOM = {
   txTypeToggle: document.querySelector(".tx-type-toggle"),
   walletSelect: document.getElementById("wallet-select"),
 
+  // Media Input
+  btnCamera: document.getElementById("btn-camera"),
+  btnGallery: document.getElementById("btn-gallery"),
+  btnVoice: document.getElementById("btn-voice"),
+  galleryInput: document.getElementById("gallery-input"),
+  cameraInput: document.getElementById("camera-input"),
+  ocrPreview: document.getElementById("ocr-preview"),
+  ocrImage: document.getElementById("ocr-image"),
+  ocrStatusText: document.getElementById("ocr-status-text"),
+  ocrProgressFill: document.getElementById("ocr-progress-fill"),
+  ocrCancel: document.getElementById("ocr-cancel"),
+  voiceIndicator: document.getElementById("voice-indicator"),
+  voiceStop: document.getElementById("voice-stop"),
+
   // Modals
   deleteModal: document.getElementById("delete-modal"),
   modalConfirm: document.getElementById("modal-confirm"),
   modalCancel: document.getElementById("modal-cancel"),
+
+  // Category Modal
+  categorySelect: document.getElementById("category-select"),
+  addCategoryBtn: document.getElementById("add-category-btn"),
+  categoryModal: document.getElementById("category-modal"),
+  catTypeIncome: document.getElementById("cat-type-income"),
+  catTypeExpense: document.getElementById("cat-type-expense"),
+  newCategoryName: document.getElementById("new-category-name"),
+  newCategoryEmoji: document.getElementById("new-category-emoji"),
+  categoryCancel: document.getElementById("category-cancel"),
+  categorySave: document.getElementById("category-save"),
 
   // Wallet Page
   walletList: document.getElementById("wallet-list"),
@@ -47,6 +72,10 @@ export const DOM = {
   walletIconPicker: document.getElementById("wallet-icon-picker"),
   walletCancel: document.getElementById("wallet-cancel"),
   walletSave: document.getElementById("wallet-save"),
+  walletIconUpload: document.getElementById("wallet-icon-upload"),
+  customIconPreview: document.getElementById("custom-icon-preview"),
+  customIconImg: document.getElementById("custom-icon-img"),
+  removeCustomIcon: document.getElementById("remove-custom-icon"),
 
   // Statistics Page
   filterMonth: document.getElementById("filter-month"),
