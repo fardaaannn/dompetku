@@ -946,11 +946,12 @@ async function runOCR(imageData) {
   try {
     if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = "Membaca teks...";
     
-    const result = await Tesseract.recognize(imageData, "ind+eng", {
+    const result = await Tesseract.recognize(imageData, "eng", {
       logger: (m) => {
         if (m.status === "recognizing text" && DOM.ocrProgressFill) {
           const progress = Math.round(m.progress * 100);
           DOM.ocrProgressFill.style.width = `${progress}%`;
+          if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = `Memproses... ${progress}%`;
         }
       },
     });
@@ -958,35 +959,103 @@ async function runOCR(imageData) {
     const text = result.data.text;
     console.log("OCR Result:", text);
 
-    // Extract numbers (potential amounts)
-    const numbers = text.match(/[\d.,]+/g);
-    if (numbers) {
-      // Find the largest number (likely the total)
-      const amounts = numbers
-        .map((n) => parseInt(n.replace(/[.,]/g, "")))
-        .filter((n) => !isNaN(n) && n > 0);
+    // Parse Indonesian receipt format
+    const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+    
+    let foundAmount = null;
+    let foundDescription = null;
+    
+    // Strategy 1: Look for TOTAL, GRAND TOTAL, SUBTOTAL keywords
+    const totalKeywords = ["total", "grand total", "subtotal", "sub total", "jumlah", "bayar", "tunai", "cash"];
+    
+    for (const line of lines) {
+      const lineLower = line.toLowerCase();
       
-      if (amounts.length > 0) {
-        const maxAmount = Math.max(...amounts);
-        if (DOM.amountInput) DOM.amountInput.value = maxAmount.toString();
-        if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = `Ditemukan: Rp ${maxAmount.toLocaleString("id-ID")}`;
-      } else {
-        if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = "Tidak ada angka ditemukan";
+      for (const keyword of totalKeywords) {
+        if (lineLower.includes(keyword)) {
+          // Extract numbers from this line - look for Rp prefix or large numbers
+          const rpMatch = line.match(/[Rr][Pp]\.?\s*([\d.,\s]+)/);
+          if (rpMatch) {
+            const numStr = rpMatch[1].replace(/[.,\s]/g, "");
+            const num = parseInt(numStr);
+            if (!isNaN(num) && num > 0 && (!foundAmount || num > foundAmount)) {
+              foundAmount = num;
+            }
+          } else {
+            // Look for large numbers (> 1000)
+            const numMatches = line.match(/[\d.,]+/g);
+            if (numMatches) {
+              for (const numStr of numMatches) {
+                const num = parseInt(numStr.replace(/[.,]/g, ""));
+                if (!isNaN(num) && num >= 1000 && (!foundAmount || num > foundAmount)) {
+                  foundAmount = num;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // Strategy 2: If no total found, look for largest number with Rp prefix
+    if (!foundAmount) {
+      const rpMatches = text.match(/[Rr][Pp]\.?\s*([\d.,\s]+)/g);
+      if (rpMatches) {
+        for (const match of rpMatches) {
+          const numStr = match.replace(/[Rr][Pp]\.?\s*/g, "").replace(/[.,\s]/g, "");
+          const num = parseInt(numStr);
+          if (!isNaN(num) && num >= 1000 && (!foundAmount || num > foundAmount)) {
+            foundAmount = num;
+          }
+        }
+      }
+    }
+    
+    // Strategy 3: Find largest number >= 1000 (likely price)
+    if (!foundAmount) {
+      const allNumbers = text.match(/[\d.,]+/g);
+      if (allNumbers) {
+        const amounts = allNumbers
+          .map(n => parseInt(n.replace(/[.,]/g, "")))
+          .filter(n => !isNaN(n) && n >= 1000);
+        
+        if (amounts.length > 0) {
+          foundAmount = Math.max(...amounts);
+        }
+      }
+    }
+    
+    // Extract description - look for store name or item names
+    // Usually first few lines contain store name
+    if (lines.length > 0) {
+      // Skip lines that are mostly numbers or very short
+      for (const line of lines.slice(0, 5)) {
+        const letterCount = (line.match(/[a-zA-Z]/g) || []).length;
+        if (letterCount >= 3 && line.length >= 5 && line.length <= 50) {
+          // Good candidate for description
+          foundDescription = line.replace(/[^\w\s]/g, "").trim();
+          break;
+        }
+      }
+    }
+    
+    // Apply results
+    if (foundAmount) {
+      if (DOM.amountInput) DOM.amountInput.value = foundAmount.toString();
+      if (DOM.ocrStatusText) {
+        DOM.ocrStatusText.textContent = `✅ Ditemukan: Rp ${foundAmount.toLocaleString("id-ID")}`;
       }
     } else {
-      if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = "Tidak ada angka ditemukan";
+      if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = "❌ Tidak ada nominal ditemukan";
     }
-
-    // Extract text for description (exclude numbers)
-    const cleanText = text.replace(/[\d.,]+/g, "").replace(/\s+/g, " ").trim();
-    if (cleanText && DOM.textInput && !DOM.textInput.value) {
-      // Take first 50 chars as description
-      DOM.textInput.value = cleanText.substring(0, 50);
+    
+    if (foundDescription && DOM.textInput && !DOM.textInput.value) {
+      DOM.textInput.value = foundDescription.substring(0, 50);
     }
 
   } catch (error) {
     console.error("OCR Error:", error);
-    if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = "Gagal membaca gambar";
+    if (DOM.ocrStatusText) DOM.ocrStatusText.textContent = "❌ Gagal membaca gambar";
   }
 }
 
@@ -1009,6 +1078,15 @@ if (DOM.btnVoice) {
   DOM.btnVoice.addEventListener("click", () => {
     // Check browser support
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    // Detect Safari/iOS
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    if (isSafari || isIOS) {
+      showIOSAlert("⚠️ Voice input tidak tersedia di Safari/iOS. Gunakan Chrome untuk fitur ini.");
+      return;
+    }
     
     if (!SpeechRecognition) {
       showIOSAlert("Browser tidak mendukung voice input. Gunakan Chrome/Edge.");
