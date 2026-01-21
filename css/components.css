@@ -1,0 +1,542 @@
+/* ============================================
+   COMPONENTS.CSS - Reusable UI Components
+   ============================================ */
+
+/* ========== BUTTONS ========== */
+.btn {
+  cursor: pointer;
+  background-color: var(--accent-color);
+  box-shadow: var(--box-shadow);
+  color: #fff;
+  border: 0;
+  display: block;
+  font-size: 16px;
+  margin: 10px 0 30px;
+  padding: 10px;
+  width: 100%;
+  border-radius: 4px;
+  transition: background var(--transition-normal);
+}
+
+.btn:hover {
+  background-color: var(--accent-hover);
+}
+
+.btn-small {
+  font-size: 12px;
+  padding: 5px 10px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-small:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.icon-btn {
+  font-size: 18px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-full-icon {
+  width: 100%;
+  justify-content: center;
+  background-color: var(--accent-color);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Login Buttons */
+.google-btn {
+  background: linear-gradient(135deg, #9c88ff, #8e78ff);
+  margin-top: 0;
+  box-shadow: 
+    0 0 15px rgba(156, 136, 255, 0.5),
+    0 4px 15px rgba(156, 136, 255, 0.3);
+  border: 1px solid rgba(156, 136, 255, 0.5);
+}
+
+.google-btn:hover {
+  background: linear-gradient(135deg, #8e78ff, #7c5ce7);
+}
+
+.anon-btn {
+  background: linear-gradient(135deg, #555, #444);
+  margin-top: 0;
+  box-shadow: 
+    0 0 15px rgba(85, 85, 85, 0.4),
+    0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.anon-btn:hover {
+  background: linear-gradient(135deg, #666, #555);
+}
+
+/* Submit Button */
+.submit-btn {
+  background: linear-gradient(135deg, #9c88ff, #8e78ff);
+  border: none;
+  padding: 15px;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 15px rgba(156, 136, 255, 0.3);
+  margin-top: 10px;
+}
+
+.submit-btn:hover {
+  background: linear-gradient(135deg, #8e78ff, #7c5ce7);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(156, 136, 255, 0.4);
+}
+
+.submit-btn:active {
+  transform: scale(0.98);
+}
+
+/* Quick Amount Buttons */
+.quick-amount-btns {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.quick-btn {
+  flex: 1;
+  min-width: 60px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: var(--accent-light);
+  color: var(--accent-color);
+  border: 1px solid rgba(156, 136, 255, 0.3);
+}
+
+.quick-btn:hover {
+  background: rgba(156, 136, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.quick-btn:active {
+  transform: scale(0.95);
+}
+
+/* Action Buttons (Edit/Delete) */
+.tx-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+
+.tx-edit-btn,
+.tx-delete-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tx-edit-btn:hover {
+  background: rgba(156, 136, 255, 0.2);
+  border-color: rgba(156, 136, 255, 0.3);
+}
+
+.tx-delete-btn:hover {
+  background: rgba(231, 76, 60, 0.2);
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+/* ========== FORMS ========== */
+label {
+  display: inline-block;
+  margin: 10px 0;
+}
+
+.form-control {
+  margin-bottom: 15px;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  display: block;
+  font-size: 16px;
+  padding: 10px;
+  width: 100%;
+  background-color: var(--card-bg);
+  color: #fff;
+  color-scheme: dark;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #555;
+}
+
+select option {
+  background-color: var(--card-bg);
+}
+
+/* Wallet Selector */
+.wallet-select {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.wallet-select:hover {
+  border-color: rgba(156, 136, 255, 0.5);
+}
+
+.wallet-select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(156, 136, 255, 0.2);
+}
+
+.wallet-select option {
+  background: #1a1a1a;
+  color: #fff;
+  padding: 10px;
+}
+
+/* ========== CARDS ========== */
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--box-shadow-lg);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Income/Expense Container */
+.inc-exp-container {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-lg) 0;
+  box-shadow: var(--box-shadow-lg);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.inc-exp-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.inc-exp-item:first-child {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: var(--spacing-lg);
+}
+
+.inc-exp-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.inc-exp-icon {
+  font-size: 32px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+}
+
+.inc-exp-info {
+  flex: 1;
+  text-align: left;
+}
+
+.inc-exp-info h4 {
+  margin: 0 0 5px 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+/* ========== MODALS ========== */
+.ios-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn var(--transition-fast);
+  cursor: pointer;
+}
+
+.ios-modal {
+  background-color: rgba(30, 30, 30, 0.9);
+  width: 270px;
+  border-radius: 14px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  animation: scaleUp var(--transition-fast);
+}
+
+.ios-modal-text {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.ios-modal h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 22px;
+  color: #fff;
+  border: none;
+  padding: 0;
+}
+
+.ios-modal p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: #ccc;
+  text-align: center;
+  max-width: 240px;
+}
+
+.ios-modal-actions {
+  display: flex;
+  border-top: 1px solid #3a3a3a;
+}
+
+.ios-modal-actions button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 12px 0;
+  font-size: 17px;
+  cursor: pointer;
+  color: #0a84ff;
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
+  width: auto;
+  transition: background-color var(--transition-fast);
+}
+
+.ios-modal-actions button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.ios-modal-actions button:first-child {
+  border-right: 1px solid #3a3a3a;
+  font-weight: 400;
+}
+
+.ios-modal-actions button.text-danger {
+  color: #ff453a;
+  font-weight: 400;
+}
+
+/* ========== LIST ITEMS ========== */
+.list {
+  list-style-type: none;
+  padding: 0;
+  margin-bottom: 40px;
+}
+
+.list li {
+  color: #fff;
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+  margin: 12px 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+.list li.plus {
+  background: linear-gradient(135deg, var(--success-bg), rgba(46, 204, 113, 0.05));
+  border: 1px solid rgba(46, 204, 113, 0.2);
+  border-left: 4px solid var(--success-color);
+}
+
+.list li.minus {
+  background: linear-gradient(135deg, var(--danger-light), rgba(231, 76, 60, 0.05));
+  border: 1px solid rgba(231, 76, 60, 0.2);
+  border-left: 4px solid var(--danger-color);
+}
+
+.li-content {
+  padding: var(--spacing-md);
+  width: 100%;
+  height: 100%;
+  transition: transform var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+}
+
+.tx-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tx-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #fff;
+  flex: 1;
+  min-width: 0;
+  padding-right: 10px;
+}
+
+.tx-amount {
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  text-align: right;
+  min-width: 100px;
+}
+
+.list li.plus .tx-amount {
+  color: var(--success-color);
+}
+
+.list li.minus .tx-amount {
+  color: var(--danger-color);
+}
+
+.tx-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Delete Button Slide */
+.delete-btn {
+  cursor: pointer;
+  background-color: var(--danger-bg);
+  border: 0;
+  color: #fff;
+  font-size: 18px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 60px;
+  transform: translateX(100%);
+  transition: transform var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+}
+
+.trash-icon {
+  pointer-events: none;
+}
+
+.list li:hover .li-content,
+.list li.active-mobile .li-content {
+  transform: translateX(-60px);
+}
+
+.list li:hover .delete-btn,
+.list li.active-mobile .delete-btn {
+  transform: translateX(0);
+}
+
+/* ========== TOGGLE SWITCHES ========== */
+.toggle-switch {
+  position: relative;
+  width: 50px;
+  height: 28px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #555;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 22px;
+  height: 22px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: all var(--transition-normal);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--accent-color);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(22px);
+}

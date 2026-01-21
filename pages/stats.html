@@ -1,0 +1,48 @@
+<!-- ========== STATISTICS PAGE ========== -->
+<div id="page-stats" class="page">
+  <div class="container">
+    <div class="stats-card">
+      <h3>Grafik Keuangan</h3>
+      <div class="chart-container">
+        <canvas id="expenseChart"></canvas>
+      </div>
+    </div>
+
+    <div class="stats-card">
+      <div class="stats-header">
+        <h3>Ringkasan Bulan Ini</h3>
+        <div class="avg-toggle">
+          <button id="avg-daily" class="avg-toggle-btn active">Harian</button>
+          <button id="avg-weekly" class="avg-toggle-btn">Mingguan</button>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-icon">💰</span>
+          <span class="stat-label">Total Pemasukan</span>
+          <span id="stat-income" class="stat-value plus">Rp 0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-icon">💸</span>
+          <span class="stat-label">Total Pengeluaran</span>
+          <span id="stat-expense" class="stat-value minus">Rp 0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-icon">📊</span>
+          <span id="avg-income-label" class="stat-label">Rata-rata Pemasukan / Hari</span>
+          <span id="stat-avg-income" class="stat-value plus">Rp 0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-icon">📉</span>
+          <span id="avg-expense-label" class="stat-label">Rata-rata Pengeluaran / Hari</span>
+          <span id="stat-avg-expense" class="stat-value minus">Rp 0</span>
+        </div>
+        <div class="stat-item stat-full-width">
+          <span class="stat-icon">📈</span>
+          <span class="stat-label">Transaksi</span>
+          <span id="stat-count" class="stat-value">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

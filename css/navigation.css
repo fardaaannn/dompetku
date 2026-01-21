@@ -1,0 +1,156 @@
+/* ============================================
+   NAVIGATION.CSS - Bottom Navigation Bar
+   ============================================ */
+
+/* App Wrapper */
+.app-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  padding-bottom: 90px;
+  position: relative;
+}
+
+/* Page System */
+.page {
+  display: none;
+  animation: pageSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page.active {
+  display: block;
+}
+
+/* Bottom Navigation - Glassmorphism */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 10px;
+  z-index: 1000;
+  
+  /* Glassmorphism Effect */
+  background: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Nav Items */
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 8px 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Circle Button Style */
+.nav-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: linear-gradient(135deg, #9c88ff 0%, #8e78ff 50%, #7c5ce7 100%);
+  box-shadow: 
+    0 4px 15px rgba(156, 136, 255, 0.3),
+    0 6px 20px rgba(156, 136, 255, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.nav-icon {
+  font-size: 22px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* White icon for add button */
+.nav-add .nav-icon {
+  filter: brightness(0) invert(1);
+}
+
+.nav-label {
+  font-size: 10px;
+  margin-top: 6px;
+  font-weight: 500;
+  color: #9c88ff;
+  transition: all 0.3s ease;
+  letter-spacing: 0.3px;
+}
+
+/* Add Button Alignment */
+.nav-add-btn {
+  margin-top: 0;
+}
+
+.nav-add-btn .nav-circle {
+  width: 48px;
+  height: 48px;
+}
+
+/* Hover Effect */
+.nav-item:hover .nav-circle {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(156, 136, 255, 0.5),
+    0 12px 35px rgba(156, 136, 255, 0.25);
+}
+
+.nav-item:hover .nav-label {
+  transform: translateY(-1px);
+}
+
+/* Active State */
+.nav-item.active .nav-circle {
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(156, 136, 255, 0.6),
+    0 8px 30px rgba(156, 136, 255, 0.3);
+}
+
+.nav-item.active .nav-label {
+  font-weight: 600;
+}
+
+/* Mobile Touch Feedback */
+.nav-item:active {
+  transform: scale(0.95);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 380px) {
+  .nav-label {
+    font-size: 9px;
+  }
+  
+  .nav-add-circle {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .nav-add-btn {
+    margin-top: -25px;
+  }
+}
+
+@media (min-width: 500px) {
+  .bottom-nav {
+    max-width: 500px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 20px 20px 0 0;
+  }
+}
