@@ -562,6 +562,18 @@ function renderApp() {
       : `-${formatRupiah(expense)}`;
   }
 
+  // Update chart percentages
+  const totalFlow = income + expense;
+  if (totalFlow > 0) {
+    const incomePct = Math.round((income / totalFlow) * 100);
+    const expensePct = Math.round((expense / totalFlow) * 100);
+    if (DOM.chartIncomePct) DOM.chartIncomePct.textContent = `${incomePct}%`;
+    if (DOM.chartExpensePct) DOM.chartExpensePct.textContent = `${expensePct}%`;
+  } else {
+    if (DOM.chartIncomePct) DOM.chartIncomePct.textContent = "0%";
+    if (DOM.chartExpensePct) DOM.chartExpensePct.textContent = "0%";
+  }
+
   // Render transaction list
   if (DOM.list) {
     DOM.list.innerHTML = "";
@@ -797,6 +809,13 @@ function setAvgPeriod(period) {
     DOM.avgDailyBtn.classList.toggle("active", period === "daily");
   if (DOM.avgWeeklyBtn)
     DOM.avgWeeklyBtn.classList.toggle("active", period === "weekly");
+  
+  // Toggle parent class for slide animation
+  const avgToggle = document.querySelector(".avg-toggle");
+  if (avgToggle) {
+    avgToggle.classList.toggle("weekly-active", period === "weekly");
+  }
+  
   updateStatistics();
 }
 
@@ -814,11 +833,20 @@ if (DOM.avgWeeklyBtn) {
 function initNavigation() {
   const navItems = document.querySelectorAll(".nav-item");
   const pages = document.querySelectorAll(".page");
+  
+  // Create audio element for click sound
+  const clickSound = new Audio("mouse-click-sound.mp3");
+  clickSound.volume = 0.3;
 
   navItems.forEach((item) => {
     item.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
+      
+      // Play click sound
+      clickSound.currentTime = 0;
+      clickSound.play().catch(() => {}); // Ignore autoplay errors
+      
       const pageName = item.dataset.page;
 
       navItems.forEach((i) => i.classList.remove("active"));
@@ -854,6 +882,11 @@ function setTransactionType(type) {
     DOM.typeIncomeBtn.classList.toggle("active", type === "income");
   if (DOM.typeExpenseBtn)
     DOM.typeExpenseBtn.classList.toggle("active", type === "expense");
+  
+  // Toggle parent class for slide animation
+  if (DOM.txTypeToggle) {
+    DOM.txTypeToggle.classList.toggle("expense-active", type === "expense");
+  }
 }
 
 if (DOM.typeIncomeBtn) {

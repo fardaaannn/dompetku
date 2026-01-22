@@ -109,18 +109,21 @@
         <div class="container">
           <div class="stats-card">
             <h3>Grafik Keuangan</h3>
-            <div class="chart-container">
-              <canvas id="expenseChart"></canvas>
+            <div class="chart-wrapper">
+              <span id="chart-expense-pct" class="chart-pct left">0%</span>
+              <div class="chart-container">
+                <canvas id="expenseChart"></canvas>
+              </div>
+              <span id="chart-income-pct" class="chart-pct right">0%</span>
             </div>
           </div>
 
           <div class="stats-card">
-            <div class="stats-header">
-              <h3>Ringkasan Bulan Ini</h3>
-              <div class="avg-toggle">
-                <button id="avg-daily" class="avg-toggle-btn active">Harian</button>
-                <button id="avg-weekly" class="avg-toggle-btn">Mingguan</button>
-              </div>
+            <h3>Ringkasan Bulan Ini</h3>
+            <div class="avg-toggle">
+              <div class="toggle-slide-indicator"></div>
+              <button id="avg-daily" class="avg-toggle-btn active">Harian</button>
+              <button id="avg-weekly" class="avg-toggle-btn">Mingguan</button>
             </div>
             <div class="stats-grid">
               <div class="stat-item">
@@ -159,6 +162,7 @@
             <form id="form">
               <!-- Transaction Type Toggle -->
               <div class="tx-type-toggle">
+                <div class="toggle-slide-indicator"></div>
                 <button type="button" id="type-income" class="tx-type-btn active" data-type="income">
                   <span>💰</span> Pemasukan
                 </button>
@@ -171,7 +175,7 @@
               <div class="form-control">
                 <label for="wallet-select">Pilih Dompet</label>
                 <select id="wallet-select" class="wallet-select">
-                  <option value="">-- Pilih Dompet --</option>
+                  <option value="">Plis pilih dulu lee</option>
                 </select>
               </div>
 
@@ -180,7 +184,7 @@
                 <label for="category-select">Kategori</label>
                 <div class="category-select-wrapper">
                   <select id="category-select" class="category-select">
-                    <option value="">-- Pilih Kategori --</option>
+                    <option value="">Plis pilih dulu lee</option>
                     <!-- Income Categories -->
                     <optgroup label="Pemasukan" id="income-categories">
                       <option value="Gaji">💼 Gaji</option>

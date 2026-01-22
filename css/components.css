@@ -98,7 +98,10 @@
 .submit-btn:hover {
   background: linear-gradient(135deg, #8e78ff, #7c5ce7);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(156, 136, 255, 0.4);
+  box-shadow: 
+    0 0 15px rgba(156, 136, 255, 0.6),
+    0 0 30px rgba(156, 136, 255, 0.4),
+    0 6px 20px rgba(156, 136, 255, 0.4);
 }
 
 .submit-btn:active {

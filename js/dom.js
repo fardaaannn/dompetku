@@ -88,6 +88,8 @@ export const DOM = {
   avgExpenseLabel: document.getElementById("avg-expense-label"),
   avgDailyBtn: document.getElementById("avg-daily"),
   avgWeeklyBtn: document.getElementById("avg-weekly"),
+  chartIncomePct: document.getElementById("chart-income-pct"),
+  chartExpensePct: document.getElementById("chart-expense-pct"),
 
   // Settings
   settingsEmail: document.getElementById("settings-email"),
